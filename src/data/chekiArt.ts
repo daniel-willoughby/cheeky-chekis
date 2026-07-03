@@ -31,14 +31,16 @@ export function chekiArt(
 
 // Real decorated cheki photos, dropped into public/chekis/ by the user.
 // Seed data cycles through these; falls back to placeholder.svg if missing.
+const base = import.meta.env.BASE_URL;
+
 export const REAL_CHEKIS = [
-  '/chekis/cheki-01.jpg',
-  '/chekis/cheki-02.jpg',
-  '/chekis/cheki-03.jpg',
-  '/chekis/cheki-04.jpg',
+  `${base}chekis/cheki-01.jpg`,
+  `${base}chekis/cheki-02.jpg`,
+  `${base}chekis/cheki-03.jpg`,
+  `${base}chekis/cheki-04.jpg`,
 ];
 
-export const CHEKI_FALLBACK = '/chekis/placeholder.svg';
+export const CHEKI_FALLBACK = `${base}chekis/placeholder.svg`;
 
 export const colorKeyForMaid = (accent: string): keyof typeof BG_PAIRS => {
   if (accent.includes('8def')) return 'blue';
