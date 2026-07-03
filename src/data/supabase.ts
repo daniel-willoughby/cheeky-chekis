@@ -8,7 +8,9 @@ if (!url || !anonKey) {
 }
 
 export const supabase = createClient(url, anonKey, {
-  auth: { flowType: 'pkce' },
+  // Implicit flow returns tokens in the URL hash, so a magic link works even
+  // when opened in a different browser than the one that requested it.
+  auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true },
 });
 
 export function chekiPhotoUrl(path: string | null): string | undefined {
