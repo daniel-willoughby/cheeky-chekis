@@ -1,0 +1,41 @@
+.login-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 22px;
+  text-align: center;
+}
+
+.login-card__emoji {
+  font-size: 44px;
+}
+
+.login-card__title {
+  font-size: 18px;
+  color: var(--purple-deep);
+  margin: 10px 0 8px;
+}
+
+.login-card__blurb {
+  font-size: 18px;
+  margin: 0 0 18px;
+}
+
+.login-card__error {
+  color: var(--pink-deep);
+  font-size: 16px;
+  margin: 10px 0 0;
+}
+
+.login-card__sent {
+  background: var(--paper-2);
+  border: 3px solid var(--ink);
+  padding: 14px;
+}

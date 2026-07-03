@@ -4,9 +4,11 @@ import {
   useProfile,
   useMyChekis,
   useMyBinders,
+  useBinderChekiCounts,
   useMaids,
   updateProfile,
 } from '../data/hooks';
+import { useAuth } from '../data/auth';
 import { MAX_HIGHLIGHTS } from '../types';
 import { MaidCard } from '../components/MaidCard';
 import { ChekiGrid } from '../components/ChekiGrid';
@@ -16,11 +18,14 @@ import './ProfilePage.css';
 
 export function ProfilePage() {
   const navigate = useNavigate();
+  const { userId, signOut } = useAuth();
   const profile = useProfile();
   const chekis = useMyChekis();
   const binders = useMyBinders();
+  const binderCounts = useBinderChekiCounts(userId ?? undefined);
   const maids = useMaids();
   const [editing, setEditing] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const [bioDraft, setBioDraft] = useState('');
 
   const maidMap = new Map((maids ?? []).map((m) => [m.id, m]));
@@ -31,11 +36,13 @@ export function ProfilePage() {
   const onWay = (chekis ?? []).filter((c) => c.status === 'on-the-way').length;
 
   function startEdit() {
+    setNameDraft(profile?.name ?? '');
     setBioDraft(profile?.bio ?? '');
     setEditing(true);
   }
   async function saveEdit() {
-    await updateProfile({ bio: bioDraft.trim() });
+    if (!userId) return;
+    await updateProfile(userId, { name: nameDraft.trim() || profile?.name, bio: bioDraft.trim() });
     setEditing(false);
   }
 
@@ -50,6 +57,14 @@ export function ProfilePage() {
           </div>
           {editing ? (
             <div style={{ marginTop: 6 }}>
+              <input
+                className="pixel-select"
+                style={{ width: '100%', marginBottom: 8 }}
+                maxLength={30}
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                placeholder="Display name"
+              />
               <textarea
                 className="pixel-select"
                 rows={2}
@@ -64,7 +79,10 @@ export function ProfilePage() {
               </div>
             </div>
           ) : (
-            <p className="body-text profile-hero__bio">{profile?.bio}</p>
+            <>
+              <p className="body-text" style={{ margin: '0 0 2px', opacity: 0.7 }}>@{profile?.username}</p>
+              <p className="body-text profile-hero__bio">{profile?.bio}</p>
+            </>
           )}
           <div className="row wrap" style={{ marginTop: 6 }}>
             <button className="chip gold" onClick={() => navigate('/shop')}>★ {profile?.points ?? 0} PTS</button>
@@ -88,7 +106,7 @@ export function ProfilePage() {
       <div className="section-label">MY BINDERS</div>
       <div className="card-grid">
         {(binders ?? []).map((b) => (
-          <BinderCard key={b.id} binder={b} onClick={() => navigate(`/binder/${b.id}`)} />
+          <BinderCard key={b.id} binder={b} count={binderCounts?.get(b.id)} onClick={() => navigate(`/binder/${b.id}`)} />
         ))}
       </div>
       <button className="btn pink" style={{ marginTop: 12, width: '100%' }} onClick={() => navigate('/shop')}>
@@ -103,6 +121,9 @@ export function ProfilePage() {
 
       <button className="btn ghost" style={{ marginTop: 22, width: '100%' }} onClick={() => navigate('/dictionary')}>
         CHEKI DICTIONARY
+      </button>
+      <button className="btn ghost" style={{ marginTop: 10, width: '100%' }} onClick={signOut}>
+        SIGN OUT
       </button>
     </div>
   );

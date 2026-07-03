@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../data/db';
-import { useProfile, setBinderDesign } from '../data/hooks';
+import { useProfile, useBinder, useBinderChekis, setBinderDesign } from '../data/hooks';
+import { useAuth } from '../data/auth';
 import { DESIGNS } from '../data/designs';
 import { ChekiGrid } from '../components/ChekiGrid';
 import { BackHeader } from '../components/BackHeader';
@@ -11,16 +10,14 @@ import './BinderPage.css';
 export function BinderPage() {
   const { binderId } = useParams();
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const profile = useProfile();
-  const binder = useLiveQuery(() => (binderId ? db.binders.get(binderId) : undefined), [binderId]);
-  const chekis = useLiveQuery(
-    async () => (binder ? (await db.chekis.bulkGet(binder.chekiIds)).filter(Boolean) : []),
-    [binder?.chekiIds.join(',')],
-  );
+  const binder = useBinder(binderId);
+  const chekis = useBinderChekis(binderId);
 
   const owned = profile?.ownedDesigns ?? [];
   const ownedDesigns = DESIGNS.filter((d) => owned.includes(d.id));
-  const canEdit = binder?.ownerId === 'me' && binder?.system !== 'sales';
+  const canEdit = binder?.ownerId === userId;
 
   return (
     <div className="screen">
@@ -44,7 +41,7 @@ export function BinderPage() {
       )}
 
       {chekis && chekis.length === 0 && <div className="empty pixel-box">This binder is empty.</div>}
-      <ChekiGrid chekis={(chekis ?? []) as never} />
+      <ChekiGrid chekis={chekis ?? []} />
     </div>
   );
 }

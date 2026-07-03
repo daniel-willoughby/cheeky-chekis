@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Cheki, Maid, Cafe } from '../types';
 import { ChekiImage } from './ChekiImage';
 import { toggleForSale, markSold, formatKRW } from '../data/hooks';
+import { useAuth } from '../data/auth';
 import { POINTS } from '../data/designs';
 import './ChekiSheet.css';
 
@@ -18,8 +19,9 @@ export function ChekiSheet({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [price, setPrice] = useState(String(cheki.price ?? ''));
-  const mine = cheki.ownerId === 'me';
+  const mine = cheki.ownerId === userId;
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { BackHeader } from '../components/BackHeader';
 import { CropModal } from '../components/CropModal';
 import { useCafes, useMaids, addCheki, formatKRW } from '../data/hooks';
+import { useAuth } from '../data/auth';
+import { supabase } from '../data/supabase';
 import { CHEKI_TYPES } from '../data/chekiMeta';
 import { MULTI_MAID_TYPES } from '../types';
 import type { ChekiType, ChekiStatus } from '../types';
@@ -11,6 +13,7 @@ import './UploadPage.css';
 
 export function UploadPage() {
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const cafes = useCafes();
   const maids = useMaids();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -22,7 +25,7 @@ export function UploadPage() {
   const [maidIds, setMaidIds] = useState<string[]>([]);
   const [type, setType] = useState<ChekiType>('normal');
   const [status, setStatus] = useState<ChekiStatus>('on-hand');
-  const [date, setDate] = useState('2026-07-03');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [forSale, setForSale] = useState(false);
   const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
@@ -54,10 +57,19 @@ export function UploadPage() {
   }
 
   async function save() {
+    if (!userId) return;
     setSaving(true);
     const cafe = cafeId || (maidIds[0] ? maids?.find((m) => m.id === maidIds[0])?.cafeId : undefined);
-    await addCheki({
-      image: blob,
+
+    let imagePath: string | null = null;
+    if (blob) {
+      const path = `${userId}/${crypto.randomUUID()}.jpg`;
+      const { error } = await supabase.storage.from('chekis').upload(path, blob, { contentType: 'image/jpeg' });
+      if (!error) imagePath = path;
+    }
+
+    await addCheki(userId, {
+      imagePath,
       maidIds,
       cafeId: cafe,
       date,

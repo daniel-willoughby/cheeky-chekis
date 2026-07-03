@@ -2,19 +2,11 @@ import { useEffect, useState } from 'react';
 import type { Cheki } from '../types';
 import { CHEKI_FALLBACK } from '../data/chekiArt';
 
-// Renders a cheki photo: object URL for uploaded blobs, else the seed image URL.
-// Falls back to a placeholder if the file is missing.
+// Renders a cheki's storage photo. Falls back to a placeholder if missing.
 export function ChekiImage({ cheki, className }: { cheki: Cheki; className?: string }) {
   const [url, setUrl] = useState<string | undefined>(cheki.imageUrl);
 
-  useEffect(() => {
-    if (cheki.image instanceof Blob) {
-      const obj = URL.createObjectURL(cheki.image);
-      setUrl(obj);
-      return () => URL.revokeObjectURL(obj);
-    }
-    setUrl(cheki.imageUrl);
-  }, [cheki.image, cheki.imageUrl]);
+  useEffect(() => setUrl(cheki.imageUrl), [cheki.imageUrl]);
 
   return (
     <img

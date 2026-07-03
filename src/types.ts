@@ -6,9 +6,8 @@ export const MULTI_MAID_TYPES: ChekiType[] = ['twin', 'group'];
 
 export interface Cheki {
   id: string;
-  ownerId: string;        // 'me' or a friend id
-  image: Blob | null;     // stored image data
-  imageUrl?: string;      // fallback seed art (data URI / path)
+  ownerId: string;
+  imageUrl?: string;      // public storage URL, or placeholder fallback
   maidIds: string[];      // one or more maids featured
   cafeId?: string;
   date?: string;          // ISO date the cheki was taken
@@ -17,7 +16,6 @@ export interface Cheki {
   forSale: boolean;
   sold: boolean;          // classified as sold, awards points once
   price?: number;         // in KRW
-  binderIds: string[];
   notes?: string;
   createdAt: number;
 }
@@ -34,8 +32,6 @@ export interface Binder {
   ownerId: string;
   name: string;
   design: BinderDesign;
-  chekiIds: string[];
-  system?: 'sales';       // the shared for-sale binder
   createdAt: number;
 }
 
@@ -60,30 +56,32 @@ export interface Cafe {
   vibe: string;           // how the cafe runs, short
   chekiPrice: number;     // base cheki price KRW
   rules: string[];        // how it runs, bullet points
-  maidIds: string[];
 }
 
-export interface Friend {
+// A friend's public profile — what you can see about someone you're
+// connected with (or a search result before you've connected).
+export interface PublicProfile {
   id: string;
+  username: string;
   name: string;
   emoji: string;
   color: string;
-  bio?: string;
+  bio: string;
 }
 
-// A notification that a friend uploaded new chekis. Read-only, not filed into
-// your own binders.
-export interface ShareEvent {
+export type FriendshipStatus = 'pending' | 'accepted';
+
+export interface Friendship {
   id: string;
-  fromFriendId: string;
-  chekiIds: string[];     // the friend's own chekis
-  message?: string;
+  requesterId: string;
+  addresseeId: string;
+  status: FriendshipStatus;
   createdAt: number;
-  seen: boolean;
 }
 
 export interface Profile {
-  id: 'me';
+  id: string;
+  username: string;
   name: string;
   emoji: string;
   bio: string;
@@ -91,6 +89,7 @@ export interface Profile {
   points: number;             // Cheki Points balance
   ownedDesigns: BinderDesign[];
   lastLoginAt?: string;       // UTC date (YYYY-MM-DD) of last daily bonus
+  lastSeenFriendsAt?: string; // ISO timestamp, drives the Friends tab badge
 }
 
 export const MAX_HIGHLIGHTS = 3;

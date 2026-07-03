@@ -4,6 +4,7 @@ import {
   useFriend,
   useChekisByOwner,
   useBindersByOwner,
+  useBinderChekiCounts,
   useMaids,
   useCafes,
 } from '../data/hooks';
@@ -21,6 +22,7 @@ export function FriendProfilePage() {
   const friend = useFriend(friendId);
   const chekis = useChekisByOwner(friendId);
   const binders = useBindersByOwner(friendId);
+  const binderCounts = useBinderChekiCounts(friendId);
   const maids = useMaids();
   const cafes = useCafes();
 
@@ -64,7 +66,7 @@ export function FriendProfilePage() {
       {binders && binders.length === 0 && <div className="empty pixel-box">No binders.</div>}
       <div className="card-grid">
         {(binders ?? []).map((b) => (
-          <BinderCard key={b.id} binder={b} onClick={() => navigate(`/binder/${b.id}`)} />
+          <BinderCard key={b.id} binder={b} count={binderCounts?.get(b.id)} onClick={() => navigate(`/binder/${b.id}`)} />
         ))}
       </div>
 

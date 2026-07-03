@@ -1,7 +1,6 @@
 import { useParams } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../data/db';
-import { useMaid, useCafe, useProfile, toggleHighlight } from '../data/hooks';
+import { useMaid, useCafe, useProfile, useMyChekis, toggleHighlight } from '../data/hooks';
+import { useAuth } from '../data/auth';
 import { MAX_HIGHLIGHTS } from '../types';
 import { MaidCard } from '../components/MaidCard';
 import { ChekiGrid } from '../components/ChekiGrid';
@@ -10,13 +9,12 @@ import './common.css';
 
 export function MaidDetailPage() {
   const { maidId } = useParams();
+  const { userId } = useAuth();
   const maid = useMaid(maidId);
   const cafe = useCafe(maid?.cafeId);
   const profile = useProfile();
-  const myChekis = useLiveQuery(
-    async () => (maidId ? (await db.chekis.where('ownerId').equals('me').toArray()).filter((c) => c.maidIds.includes(maidId)) : []),
-    [maidId],
-  );
+  const allMyChekis = useMyChekis();
+  const myChekis = maidId ? (allMyChekis ?? []).filter((c) => c.maidIds.includes(maidId)) : [];
 
   if (!maid) return <div className="screen"><BackHeader title="Maid" /></div>;
   const highlights = profile?.favouriteMaidIds ?? [];
@@ -38,8 +36,8 @@ export function MaidDetailPage() {
           <button
             className={`btn ${isHighlighted ? 'pink' : 'ghost'}`}
             style={{ width: '100%', opacity: full ? 0.5 : 1 }}
-            disabled={full}
-            onClick={() => toggleHighlight(maid.id)}
+            disabled={full || !userId}
+            onClick={() => userId && toggleHighlight(userId, maid.id)}
           >
             {isHighlighted ? '★ HIGHLIGHTED' : full ? 'HIGHLIGHTS FULL' : 'HIGHLIGHT'}
           </button>
@@ -47,10 +45,10 @@ export function MaidDetailPage() {
       </div>
 
       <div className="section-label">MY CHEKIS OF {maid.name.toUpperCase()}</div>
-      {myChekis && myChekis.length === 0 && (
+      {myChekis.length === 0 && (
         <div className="empty pixel-box">None yet. Go collect one!</div>
       )}
-      <ChekiGrid chekis={(myChekis ?? []) as never} />
+      <ChekiGrid chekis={myChekis} />
     </div>
   );
 }

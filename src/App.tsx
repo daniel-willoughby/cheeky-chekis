@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { TabBar } from './components/TabBar';
 import { ProfilePage } from './pages/ProfilePage';
@@ -11,9 +12,21 @@ import { UploadPage } from './pages/UploadPage';
 import { BinderPage } from './pages/BinderPage';
 import { DictionaryPage } from './pages/DictionaryPage';
 import { ShopPage } from './pages/ShopPage';
+import { LoginPage } from './pages/LoginPage';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { useAuth } from './data/auth';
+import { claimDailyBonus } from './data/hooks';
 
 export default function App() {
+  const { session, userId, loading } = useAuth();
+
+  useEffect(() => {
+    if (userId) claimDailyBonus(userId);
+  }, [userId]);
+
+  if (loading) return null;
+  if (!session || !userId) return <LoginPage />;
+
   return (
     <>
       <Routes>

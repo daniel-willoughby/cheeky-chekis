@@ -1,10 +1,12 @@
 import { useProfile, buyDesign } from '../data/hooks';
+import { useAuth } from '../data/auth';
 import { DESIGNS, POINTS } from '../data/designs';
 import { BackHeader } from '../components/BackHeader';
 import './common.css';
 import './ShopPage.css';
 
 export function ShopPage() {
+  const { userId } = useAuth();
   const profile = useProfile();
   const owned = profile?.ownedDesigns ?? [];
   const points = profile?.points ?? 0;
@@ -38,8 +40,8 @@ export function ShopPage() {
                 <button
                   className={`btn ${canBuy ? '' : 'ghost'}`}
                   style={{ width: '100%', opacity: canBuy ? 1 : 0.6 }}
-                  disabled={!canBuy}
-                  onClick={() => buyDesign(d.id)}
+                  disabled={!canBuy || !userId}
+                  onClick={() => userId && buyDesign(userId, d.id)}
                 >
                   ★ {d.price}
                 </button>

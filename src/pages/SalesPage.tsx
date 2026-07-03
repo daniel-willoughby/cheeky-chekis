@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useForSaleChekis, useMaids, useFriends, formatKRW } from '../data/hooks';
+import { useForSaleChekis, useMaids, usePublicProfilesByIds, formatKRW } from '../data/hooks';
+import { useAuth } from '../data/auth';
 import { ChekiCard } from '../components/ChekiCard';
 import { ChekiSheet } from '../components/ChekiSheet';
 import { CHEKI_TYPES } from '../data/chekiMeta';
@@ -9,16 +10,17 @@ import './common.css';
 const FILTERS: (ChekiType | 'all')[] = ['all', ...CHEKI_TYPES];
 
 export function SalesPage() {
+  const { userId } = useAuth();
   const forSale = useForSaleChekis();
   const maids = useMaids();
-  const friends = useFriends();
+  const sellers = usePublicProfilesByIds((forSale ?? []).map((c) => c.ownerId));
   const [filter, setFilter] = useState<ChekiType | 'all'>('all');
   const [open, setOpen] = useState<Cheki | null>(null);
 
   const maidMap = new Map((maids ?? []).map((m) => [m.id, m]));
   const maidsFor = (c: Cheki): Maid[] => c.maidIds.map((id) => maidMap.get(id)).filter(Boolean) as Maid[];
   const sellerName = (ownerId: string) =>
-    ownerId === 'me' ? 'You' : friends?.find((f) => f.id === ownerId)?.name ?? 'Friend';
+    ownerId === userId ? 'You' : sellers?.get(ownerId)?.username ?? 'friend';
 
   const items = (forSale ?? []).filter((c) => filter === 'all' || c.type === filter);
   const total = items.reduce((s, c) => s + (c.price ?? 0), 0);

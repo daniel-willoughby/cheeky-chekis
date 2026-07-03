@@ -1,230 +1,542 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid } from './db';
-import type { Cheki, Binder, BinderDesign, Cafe, Profile, ChekiType, ChekiStatus } from '../types';
-import { MAX_HIGHLIGHTS } from '../types';
+import { useEffect, useState } from 'react';
+import type { PostgrestError } from '@supabase/supabase-js';
+import { supabase, chekiPhotoUrl } from './supabase';
+import { useAuth } from './auth';
+import { useDataVersion } from './store';
+import { CHEKI_FALLBACK } from './chekiArt';
 import { POINTS, STARTER_DESIGNS, designPrice, utcDay } from './designs';
+import { MAX_HIGHLIGHTS } from '../types';
+import type {
+  Cheki,
+  Binder,
+  BinderDesign,
+  Cafe,
+  Maid,
+  Profile,
+  PublicProfile,
+  Friendship,
+  ChekiType,
+  ChekiStatus,
+} from '../types';
 
-// Central points crediting so every reward runs the same path.
-export async function awardPoints(n: number): Promise<void> {
-  const p = await db.profile.get('me');
-  if (p) await db.profile.update('me', { points: p.points + n });
+// ---------- row -> camelCase mappers ----------
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = any;
+
+function mapCheki(row: Row): Cheki {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    imageUrl: chekiPhotoUrl(row.image_path) ?? CHEKI_FALLBACK,
+    maidIds: row.maid_ids ?? [],
+    cafeId: row.cafe_id ?? undefined,
+    date: row.date ?? undefined,
+    type: row.type,
+    status: row.status,
+    forSale: row.for_sale,
+    sold: row.sold,
+    price: row.price ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: Date.parse(row.created_at),
+  };
 }
 
-export const useProfile = () => useLiveQuery(() => db.profile.get('me'), []);
-export const useCafes = () => useLiveQuery(() => db.cafes.toArray(), []);
-export const useCafe = (id?: string) =>
-  useLiveQuery(() => (id ? db.cafes.get(id) : undefined), [id]);
-export const useMaids = () => useLiveQuery(() => db.maids.toArray(), []);
-export const useMaid = (id?: string) =>
-  useLiveQuery(() => (id ? db.maids.get(id) : undefined), [id]);
-export const useMaidsByCafe = (cafeId?: string) =>
-  useLiveQuery(
-    () => (cafeId ? db.maids.where('cafeId').equals(cafeId).toArray() : []),
-    [cafeId],
-  );
-export const useFriends = () => useLiveQuery(() => db.friends.toArray(), []);
-export const useFriend = (id?: string) =>
-  useLiveQuery(() => (id ? db.friends.get(id) : undefined), [id]);
-export const useChekisByOwner = (ownerId?: string) =>
-  useLiveQuery(
-    () => (ownerId ? db.chekis.where('ownerId').equals(ownerId).toArray() : []),
-    [ownerId],
-  );
-export const useBindersByOwner = (ownerId?: string) =>
-  useLiveQuery(
-    () => (ownerId ? db.binders.where('ownerId').equals(ownerId).toArray() : []),
-    [ownerId],
-  );
+function mapBinder(row: Row): Binder {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    name: row.name,
+    design: row.design,
+    createdAt: Date.parse(row.created_at),
+  };
+}
 
-export const useMyChekis = () =>
-  useLiveQuery(() => db.chekis.where('ownerId').equals('me').toArray(), []);
-export const useMyBinders = () =>
-  useLiveQuery(() => db.binders.where('ownerId').equals('me').toArray(), []);
-export const useSalesBinder = () =>
-  useLiveQuery(() => db.binders.where('system').equals('sales').first(), []);
-export const useChekisByIds = (ids: string[]) =>
-  useLiveQuery(() => db.chekis.bulkGet(ids).then((r) => r.filter(Boolean) as Cheki[]), [ids.join(',')]);
-export const useForSaleChekis = () =>
-  useLiveQuery(
-    async () => (await db.chekis.toArray()).filter((c) => c.forSale),
-    [],
-  );
+function mapMaid(row: Row): Maid {
+  return {
+    id: row.id,
+    name: row.name,
+    cafeId: row.cafe_id,
+    color: row.color,
+    emoji: row.emoji,
+    hairColor: row.hair_color,
+    specialty: row.specialty,
+    bio: row.bio,
+  };
+}
 
-export const useShares = () =>
-  useLiveQuery(async () => (await db.shares.toArray()).sort((a, b) => b.createdAt - a.createdAt), []);
-export const usePendingShares = () =>
-  useLiveQuery(async () => (await db.shares.toArray()).filter((s) => !s.seen), []);
+function mapCafe(row: Row): Cafe {
+  return {
+    id: row.id,
+    name: row.name,
+    district: row.district,
+    manager: row.manager,
+    color: row.color,
+    emoji: row.emoji,
+    vibe: row.vibe,
+    chekiPrice: row.cheki_price,
+    rules: row.rules ?? [],
+  };
+}
 
-// mutations
+function mapProfile(row: Row): Profile {
+  return {
+    id: row.id,
+    username: row.username,
+    name: row.name,
+    emoji: row.emoji,
+    bio: row.bio,
+    favouriteMaidIds: row.favourite_maid_ids ?? [],
+    points: row.points,
+    ownedDesigns: row.owned_designs ?? [],
+    lastLoginAt: row.last_login_at ?? undefined,
+    lastSeenFriendsAt: row.last_seen_friends_at ?? undefined,
+  };
+}
 
-export async function addCheki(input: {
-  image: Blob | null;
-  maidIds: string[];
-  cafeId?: string;
-  date?: string;
-  type: ChekiType;
-  status: ChekiStatus;
-  forSale: boolean;
-  price?: number;
-  notes?: string;
-}): Promise<string> {
-  const id = uid('ck');
-  const binderIds: string[] = [];
-  if (input.forSale) {
-    const sales = await db.binders.where('system').equals('sales').first();
-    if (sales) {
-      binderIds.push(sales.id);
-      await db.binders.update(sales.id, { chekiIds: [...sales.chekiIds, id] });
-    }
+function mapPublicProfile(row: Row): PublicProfile {
+  return {
+    id: row.id,
+    username: row.username,
+    name: row.name,
+    emoji: row.emoji,
+    color: row.color,
+    bio: row.bio,
+  };
+}
+
+function mapFriendship(row: Row): Friendship {
+  return {
+    id: row.id,
+    requesterId: row.requester_id,
+    addresseeId: row.addressee_id,
+    status: row.status,
+    createdAt: Date.parse(row.created_at),
+  };
+}
+
+async function run<R extends { data: unknown; error: PostgrestError | null }>(
+  p: PromiseLike<R>,
+): Promise<NonNullable<R['data']>> {
+  const { data, error } = await p;
+  if (error) throw new Error(error.message);
+  return data as NonNullable<R['data']>;
+}
+
+// ---------- generic fetch-and-refetch hook ----------
+// Refetches whenever the global data version bumps (after any mutation) or
+// any of `deps` changes. No realtime subscriptions — simple and reliable
+// for a small friend-group app.
+
+function useQuery<T>(fetcher: () => Promise<T>, deps: unknown[]): T | undefined {
+  const version = useDataVersion((s) => s.version);
+  const [data, setData] = useState<T | undefined>(undefined);
+
+  useEffect(() => {
+    let alive = true;
+    fetcher().then((r) => {
+      if (alive) setData(r);
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version, ...deps]);
+
+  return data;
+}
+
+function bump() {
+  useDataVersion.getState().bump();
+}
+
+// ---------- profile ----------
+
+export const useProfile = (): Profile | undefined => {
+  const { userId } = useAuth();
+  return useQuery(async () => {
+    if (!userId) return undefined;
+    const row = await run(supabase.from('profiles').select('*').eq('id', userId).single());
+    return mapProfile(row);
+  }, [userId]);
+};
+
+export async function updateProfile(userId: string, patch: Partial<Profile>): Promise<void> {
+  const dbPatch: Row = {};
+  if (patch.name !== undefined) dbPatch.name = patch.name;
+  if (patch.bio !== undefined) dbPatch.bio = patch.bio;
+  if (patch.favouriteMaidIds !== undefined) dbPatch.favourite_maid_ids = patch.favouriteMaidIds;
+  if (patch.points !== undefined) dbPatch.points = patch.points;
+  if (patch.ownedDesigns !== undefined) dbPatch.owned_designs = patch.ownedDesigns;
+  if (patch.lastLoginAt !== undefined) dbPatch.last_login_at = patch.lastLoginAt;
+  if (patch.lastSeenFriendsAt !== undefined) dbPatch.last_seen_friends_at = patch.lastSeenFriendsAt;
+  await run(supabase.from('profiles').update(dbPatch).eq('id', userId));
+  bump();
+}
+
+export async function awardPoints(userId: string, n: number): Promise<void> {
+  const row = await run(supabase.from('profiles').select('points').eq('id', userId).single());
+  await run(supabase.from('profiles').update({ points: row.points + n }).eq('id', userId));
+  bump();
+}
+
+// Toggle a maid in your highlights, capped at MAX_HIGHLIGHTS.
+export async function toggleHighlight(userId: string, maidId: string): Promise<void> {
+  const row = await run(supabase.from('profiles').select('favourite_maid_ids').eq('id', userId).single());
+  const current: string[] = row.favourite_maid_ids ?? [];
+  const next = current.includes(maidId)
+    ? current.filter((id) => id !== maidId)
+    : current.length < MAX_HIGHLIGHTS
+      ? [...current, maidId]
+      : current;
+  await run(supabase.from('profiles').update({ favourite_maid_ids: next }).eq('id', userId));
+  bump();
+}
+
+// Award the daily login bonus once per UTC day. Also backfills owned designs.
+export async function claimDailyBonus(userId: string): Promise<boolean> {
+  const row = await run(supabase.from('profiles').select('*').eq('id', userId).single());
+  const today = utcDay();
+  const patch: Row = {};
+  if (!row.owned_designs || row.owned_designs.length === 0) patch.owned_designs = STARTER_DESIGNS;
+  let awarded = false;
+  if (row.last_login_at !== today) {
+    patch.points = (row.points ?? 0) + POINTS.dailyLogin;
+    patch.last_login_at = today;
+    awarded = true;
   }
-  await db.chekis.add({
-    id,
-    ownerId: 'me',
-    image: input.image,
-    maidIds: input.maidIds,
-    cafeId: input.cafeId,
-    date: input.date,
-    type: input.type,
-    status: input.status,
-    forSale: input.forSale,
-    sold: false,
-    price: input.price,
-    binderIds,
-    notes: input.notes,
-    createdAt: Date.now(),
-  });
-  await awardPoints(POINTS.upload);
-  return id;
+  if (Object.keys(patch).length) {
+    await run(supabase.from('profiles').update(patch).eq('id', userId));
+    bump();
+  }
+  return awarded;
+}
+
+export async function buyDesign(userId: string, design: BinderDesign): Promise<boolean> {
+  const row = await run(supabase.from('profiles').select('points, owned_designs').eq('id', userId).single());
+  const owned: BinderDesign[] = row.owned_designs ?? [];
+  if (owned.includes(design)) return false;
+  const cost = designPrice(design);
+  if (row.points < cost) return false;
+  await run(
+    supabase
+      .from('profiles')
+      .update({ points: row.points - cost, owned_designs: [...owned, design] })
+      .eq('id', userId),
+  );
+  bump();
+  return true;
+}
+
+// ---------- cafes & maids ----------
+
+export const useCafes = (): Cafe[] | undefined =>
+  useQuery(async () => (await run(supabase.from('cafes').select('*').order('name'))).map(mapCafe), []);
+
+export const useCafe = (id?: string): Cafe | undefined =>
+  useQuery(async () => {
+    if (!id) return undefined;
+    const row = await run(supabase.from('cafes').select('*').eq('id', id).single());
+    return mapCafe(row);
+  }, [id]);
+
+export const useMaids = (): Maid[] | undefined =>
+  useQuery(async () => (await run(supabase.from('maids').select('*').order('name'))).map(mapMaid), []);
+
+export const useMaid = (id?: string): Maid | undefined =>
+  useQuery(async () => {
+    if (!id) return undefined;
+    const row = await run(supabase.from('maids').select('*').eq('id', id).single());
+    return mapMaid(row);
+  }, [id]);
+
+export const useMaidsByCafe = (cafeId?: string): Maid[] | undefined =>
+  useQuery(async () => {
+    if (!cafeId) return [];
+    return (await run(supabase.from('maids').select('*').eq('cafe_id', cafeId).order('name'))).map(mapMaid);
+  }, [cafeId]);
+
+export async function updateCafe(cafeId: string, patch: Partial<Cafe>): Promise<void> {
+  const dbPatch: Row = {};
+  if (patch.district !== undefined) dbPatch.district = patch.district;
+  if (patch.manager !== undefined) dbPatch.manager = patch.manager;
+  if (patch.chekiPrice !== undefined) dbPatch.cheki_price = patch.chekiPrice;
+  if (patch.vibe !== undefined) dbPatch.vibe = patch.vibe;
+  if (patch.rules !== undefined) dbPatch.rules = patch.rules;
+  await run(supabase.from('cafes').update(dbPatch).eq('id', cafeId));
+  bump();
+}
+
+// ---------- chekis ----------
+
+export const useChekisByOwner = (ownerId?: string): Cheki[] | undefined =>
+  useQuery(async () => {
+    if (!ownerId) return [];
+    const rows = await run(
+      supabase.from('chekis').select('*').eq('owner_id', ownerId).order('created_at', { ascending: false }),
+    );
+    return rows.map(mapCheki);
+  }, [ownerId]);
+
+export const useMyChekis = (): Cheki[] | undefined => {
+  const { userId } = useAuth();
+  return useChekisByOwner(userId ?? undefined);
+};
+
+export const useForSaleChekis = (): Cheki[] | undefined =>
+  useQuery(async () => {
+    const rows = await run(
+      supabase.from('chekis').select('*').eq('for_sale', true).order('created_at', { ascending: false }),
+    );
+    return rows.map(mapCheki);
+  }, []);
+
+// resolves seller names for an arbitrary set of owner ids (e.g. the Sales
+// market, where sellers aren't necessarily your friends)
+export const usePublicProfilesByIds = (ids: string[]): Map<string, PublicProfile> | undefined =>
+  useQuery(async () => {
+    if (ids.length === 0) return new Map();
+    const rows = await run(supabase.from('profiles').select('*').in('id', ids));
+    return new Map(rows.map((r: Row) => [r.id, mapPublicProfile(r)]));
+  }, [ids.slice().sort().join(',')]);
+
+export async function addCheki(
+  userId: string,
+  input: {
+    imagePath: string | null;
+    maidIds: string[];
+    cafeId?: string;
+    date?: string;
+    type: ChekiType;
+    status: ChekiStatus;
+    forSale: boolean;
+    price?: number;
+    notes?: string;
+  },
+): Promise<string> {
+  const row = await run(
+    supabase
+      .from('chekis')
+      .insert({
+        owner_id: userId,
+        image_path: input.imagePath,
+        maid_ids: input.maidIds,
+        cafe_id: input.cafeId ?? null,
+        date: input.date ?? null,
+        type: input.type,
+        status: input.status,
+        for_sale: input.forSale,
+        sold: false,
+        price: input.price ?? null,
+        notes: input.notes ?? null,
+      })
+      .select('id')
+      .single(),
+  );
+  await awardPoints(userId, POINTS.upload);
+  bump();
+  return row.id;
 }
 
 export async function toggleForSale(cheki: Cheki, price?: number): Promise<void> {
-  const sales = await db.binders.where('system').equals('sales').first();
   const nextForSale = !cheki.forSale;
-  let binderIds = cheki.binderIds;
-  if (sales) {
-    if (nextForSale) {
-      binderIds = Array.from(new Set([...binderIds, sales.id]));
-      await db.binders.update(sales.id, {
-        chekiIds: Array.from(new Set([...sales.chekiIds, cheki.id])),
-      });
-    } else {
-      binderIds = binderIds.filter((b) => b !== sales.id);
-      await db.binders.update(sales.id, {
-        chekiIds: sales.chekiIds.filter((c) => c !== cheki.id),
-      });
-    }
-  }
-  await db.chekis.update(cheki.id, {
-    forSale: nextForSale,
-    price: nextForSale ? (price ?? cheki.price) : cheki.price,
-    binderIds,
-  });
+  await run(
+    supabase
+      .from('chekis')
+      .update({ for_sale: nextForSale, price: nextForSale ? (price ?? cheki.price ?? null) : cheki.price ?? null })
+      .eq('id', cheki.id),
+  );
+  bump();
 }
 
 // Classify a for-sale cheki as sold. Awards points once, pulls it off the market.
 export async function markSold(cheki: Cheki): Promise<void> {
   if (cheki.sold) return;
-  const sales = await db.binders.where('system').equals('sales').first();
-  if (sales) {
-    await db.binders.update(sales.id, {
-      chekiIds: sales.chekiIds.filter((c) => c !== cheki.id),
-    });
-  }
-  await db.chekis.update(cheki.id, {
-    sold: true,
-    forSale: false,
-    binderIds: cheki.binderIds.filter((b) => b !== sales?.id),
-  });
-  await awardPoints(POINTS.sold);
-}
-
-export async function setBinderDesign(binderId: string, design: BinderDesign): Promise<void> {
-  await db.binders.update(binderId, { design });
-}
-
-// Spend points to unlock a binder design. Returns false if unaffordable/owned.
-export async function buyDesign(design: BinderDesign): Promise<boolean> {
-  const p = await db.profile.get('me');
-  if (!p) return false;
-  const owned = p.ownedDesigns ?? [];
-  if (owned.includes(design)) return false;
-  const cost = designPrice(design);
-  if (p.points < cost) return false;
-  await db.profile.update('me', {
-    points: p.points - cost,
-    ownedDesigns: [...owned, design],
-  });
-  return true;
-}
-
-// Award the daily login bonus once per UTC day. Also backfills owned designs.
-export async function claimDailyBonus(): Promise<boolean> {
-  const p = await db.profile.get('me');
-  if (!p) return false;
-  const today = utcDay();
-  const patch: Partial<typeof p> = {};
-  if (!p.ownedDesigns) patch.ownedDesigns = STARTER_DESIGNS;
-  let awarded = false;
-  if (p.lastLoginAt !== today) {
-    patch.points = (p.points ?? 0) + POINTS.dailyLogin;
-    patch.lastLoginAt = today;
-    awarded = true;
-  }
-  if (Object.keys(patch).length) await db.profile.update('me', patch);
-  return awarded;
-}
-
-export async function addChekiToBinder(chekiId: string, binderId: string): Promise<void> {
-  const [cheki, binder] = await Promise.all([db.chekis.get(chekiId), db.binders.get(binderId)]);
-  if (!cheki || !binder) return;
-  await db.chekis.update(chekiId, {
-    binderIds: Array.from(new Set([...cheki.binderIds, binderId])),
-  });
-  await db.binders.update(binderId, {
-    chekiIds: Array.from(new Set([...binder.chekiIds, chekiId])),
-  });
-}
-
-export async function createBinder(name: string, design: Binder['design']): Promise<string> {
-  const id = uid('binder');
-  await db.binders.add({
-    id,
-    ownerId: 'me',
-    name,
-    design,
-    chekiIds: [],
-    createdAt: Date.now(),
-  });
-  return id;
-}
-
-export async function markSharesSeen(): Promise<void> {
-  const unseen = await db.shares.filter((s) => !s.seen).toArray();
-  await Promise.all(unseen.map((s) => db.shares.update(s.id, { seen: true })));
-}
-
-// Profile edits
-export async function updateProfile(patch: Partial<Profile>): Promise<void> {
-  await db.profile.update('me', patch);
-}
-
-// Toggle a maid in your highlights, capped at MAX_HIGHLIGHTS.
-export async function toggleHighlight(maidId: string): Promise<void> {
-  const p = await db.profile.get('me');
-  if (!p) return;
-  const current = p.favouriteMaidIds ?? [];
-  if (current.includes(maidId)) {
-    await db.profile.update('me', { favouriteMaidIds: current.filter((id) => id !== maidId) });
-  } else if (current.length < MAX_HIGHLIGHTS) {
-    await db.profile.update('me', { favouriteMaidIds: [...current, maidId] });
-  }
-}
-
-export async function updateCafe(cafeId: string, patch: Partial<Cafe>): Promise<void> {
-  await db.cafes.update(cafeId, patch);
+  await run(supabase.from('chekis').update({ sold: true, for_sale: false }).eq('id', cheki.id));
+  await awardPoints(cheki.ownerId, POINTS.sold);
+  bump();
 }
 
 export function formatKRW(n?: number): string {
   if (n == null) return '-';
   return '₩' + n.toLocaleString('en-US');
+}
+
+// ---------- binders ----------
+
+export const useBindersByOwner = (ownerId?: string): Binder[] | undefined =>
+  useQuery(async () => {
+    if (!ownerId) return [];
+    const rows = await run(
+      supabase.from('binders').select('*').eq('owner_id', ownerId).order('created_at'),
+    );
+    return rows.map(mapBinder);
+  }, [ownerId]);
+
+export const useBinderChekiCounts = (ownerId?: string): Map<string, number> | undefined =>
+  useQuery(async () => {
+    if (!ownerId) return new Map();
+    const rows = await run(
+      supabase.from('binder_chekis').select('binder_id, binders!inner(owner_id)').eq('binders.owner_id', ownerId),
+    );
+    const counts = new Map<string, number>();
+    for (const r of rows as Row[]) counts.set(r.binder_id, (counts.get(r.binder_id) ?? 0) + 1);
+    return counts;
+  }, [ownerId]);
+
+export const useMyBinders = (): Binder[] | undefined => {
+  const { userId } = useAuth();
+  return useBindersByOwner(userId ?? undefined);
+};
+
+export const useBinder = (id?: string): Binder | undefined =>
+  useQuery(async () => {
+    if (!id) return undefined;
+    const row = await run(supabase.from('binders').select('*').eq('id', id).single());
+    return mapBinder(row);
+  }, [id]);
+
+export const useBinderChekis = (binderId?: string): Cheki[] | undefined =>
+  useQuery(async () => {
+    if (!binderId) return [];
+    const rows = await run(
+      supabase.from('binder_chekis').select('chekis(*)').eq('binder_id', binderId),
+    );
+    return rows.map((r: Row) => mapCheki(r.chekis)).filter((c: Cheki) => c.id);
+  }, [binderId]);
+
+export async function createBinder(userId: string, name: string, design: BinderDesign): Promise<string> {
+  const row = await run(
+    supabase.from('binders').insert({ owner_id: userId, name, design }).select('id').single(),
+  );
+  bump();
+  return row.id;
+}
+
+export async function setBinderDesign(binderId: string, design: BinderDesign): Promise<void> {
+  await run(supabase.from('binders').update({ design }).eq('id', binderId));
+  bump();
+}
+
+export async function addChekiToBinder(chekiId: string, binderId: string): Promise<void> {
+  await run(supabase.from('binder_chekis').upsert({ binder_id: binderId, cheki_id: chekiId }));
+  bump();
+}
+
+// ---------- friends ----------
+
+export const useFriends = (): PublicProfile[] | undefined => {
+  const { userId } = useAuth();
+  return useQuery(async () => {
+    if (!userId) return [];
+    const rows = await run(
+      supabase
+        .from('friendships')
+        .select('requester_id, addressee_id, requester:requester_id(*), addressee:addressee_id(*)')
+        .eq('status', 'accepted')
+        .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+    );
+    return rows.map((r: Row) => mapPublicProfile(r.requester_id === userId ? r.addressee : r.requester));
+  }, [userId]);
+};
+
+export const useFriend = (id?: string): PublicProfile | undefined =>
+  useQuery(async () => {
+    if (!id) return undefined;
+    const row = await run(supabase.from('profiles').select('*').eq('id', id).single());
+    return mapPublicProfile(row);
+  }, [id]);
+
+// incoming pending requests, with the requester's public profile attached
+export const useIncomingRequests = (): (Friendship & { from: PublicProfile })[] | undefined => {
+  const { userId } = useAuth();
+  return useQuery(async () => {
+    if (!userId) return [];
+    const rows = await run(
+      supabase
+        .from('friendships')
+        .select('*, requester:requester_id(*)')
+        .eq('addressee_id', userId)
+        .eq('status', 'pending'),
+    );
+    return rows.map((r: Row) => ({ ...mapFriendship(r), from: mapPublicProfile(r.requester) }));
+  }, [userId]);
+};
+
+export const useOutgoingRequestIds = (): Set<string> | undefined => {
+  const { userId } = useAuth();
+  return useQuery(async () => {
+    if (!userId) return new Set<string>();
+    const rows = await run(
+      supabase.from('friendships').select('addressee_id, requester_id').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+    );
+    return new Set(rows.map((r: Row) => (r.requester_id === userId ? r.addressee_id : r.requester_id)));
+  }, [userId]);
+};
+
+export async function searchProfiles(query: string, excludeUserId: string): Promise<PublicProfile[]> {
+  if (!query.trim()) return [];
+  const rows = await run(
+    supabase.from('profiles').select('*').ilike('username', `%${query.trim()}%`).neq('id', excludeUserId).limit(10),
+  );
+  return rows.map(mapPublicProfile);
+}
+
+export async function sendFriendRequest(userId: string, targetId: string): Promise<void> {
+  await run(supabase.from('friendships').insert({ requester_id: userId, addressee_id: targetId }));
+  bump();
+}
+
+export async function acceptFriendRequest(friendshipId: string): Promise<void> {
+  await run(supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId));
+  bump();
+}
+
+export async function removeFriendship(friendshipId: string): Promise<void> {
+  await run(supabase.from('friendships').delete().eq('id', friendshipId));
+  bump();
+}
+
+// friends' recent chekis, grouped by friend — powers the Friends tab feed
+export interface FriendActivity {
+  friend: PublicProfile;
+  chekis: Cheki[];
+  latestAt: number;
+}
+
+export const useFriendActivity = (): FriendActivity[] | undefined => {
+  const friends = useFriends();
+  return useQuery(async () => {
+    if (!friends || friends.length === 0) return [];
+    const ids = friends.map((f) => f.id);
+    const rows = await run(
+      supabase.from('chekis').select('*').in('owner_id', ids).order('created_at', { ascending: false }),
+    );
+    const chekis = rows.map(mapCheki);
+    const byOwner = new Map<string, Cheki[]>();
+    for (const c of chekis) {
+      if (!byOwner.has(c.ownerId)) byOwner.set(c.ownerId, []);
+      byOwner.get(c.ownerId)!.push(c);
+    }
+    return friends
+      .filter((f) => byOwner.has(f.id))
+      .map((f) => {
+        const fChekis = byOwner.get(f.id)!;
+        return { friend: f, chekis: fChekis, latestAt: Math.max(...fChekis.map((c) => c.createdAt)) };
+      })
+      .sort((a, b) => b.latestAt - a.latestAt);
+  }, [friends?.map((f) => f.id).join(',')]);
+};
+
+export const usePendingFriendActivityCount = (): number => {
+  const profile = useProfile();
+  const activity = useFriendActivity();
+  if (!activity) return 0;
+  const since = profile?.lastSeenFriendsAt ? Date.parse(profile.lastSeenFriendsAt) : 0;
+  return activity.filter((a) => a.latestAt > since).length;
+};
+
+export async function markFriendsSeen(userId: string): Promise<void> {
+  await run(supabase.from('profiles').update({ last_seen_friends_at: new Date().toISOString() }).eq('id', userId));
+  bump();
 }
