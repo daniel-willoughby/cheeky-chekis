@@ -1,0 +1,30 @@
+.cafe-hero {
+  --accent: var(--pink);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  box-shadow: 5px 5px 0 var(--accent);
+}
+.cafe-hero__emoji {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  background: color-mix(in srgb, var(--accent) 55%, white);
+  border: 3px solid var(--ink);
+}
+.cafe-detail__line { font-size: 18px; line-height: 1.4; }
+
+.cafe-rules {
+  margin: 10px 0 0;
+  padding-left: 22px;
+}
+.cafe-rules li {
+  font-size: 18px;
+  margin-bottom: 6px;
+  line-height: 1.1;
+}

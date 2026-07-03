@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400" shape-rendering="crispEdges">
+  <rect width="300" height="400" fill="#fdf6ff"/>
+  <rect x="12" y="12" width="276" height="376" fill="none" stroke="#241b3a" stroke-width="6"/>
+  <rect x="30" y="30" width="240" height="300" fill="#ff8fc7"/>
+  <rect x="30" y="200" width="240" height="130" fill="#9b6cff"/>
+  <circle cx="150" cy="150" r="52" fill="#241b3a" opacity="0.15"/>
+  <text x="150" y="172" font-size="72" text-anchor="middle">📷</text>
+  <text x="150" y="368" font-family="monospace" font-size="20" fill="#241b3a" text-anchor="middle">cheki photo</text>
+</svg>

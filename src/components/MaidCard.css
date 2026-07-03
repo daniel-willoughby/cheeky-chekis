@@ -1,0 +1,64 @@
+.maid-card {
+  --accent: var(--pink);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px 12px;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 35%, white), var(--paper) 70%);
+  border: 4px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--accent);
+  text-align: center;
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.maid-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 3px 3px 0 var(--accent);
+}
+.maid-card--hl {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.maid-card__star {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: var(--gold);
+  font-size: 18px;
+  text-shadow: 1px 1px 0 var(--ink);
+}
+
+.maid-card__portrait {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent) 50%, white);
+  border: 3px solid var(--ink);
+}
+.maid-card__emoji {
+  font-size: 54px;
+  line-height: 1;
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.2));
+}
+.maid-card--compact .maid-card__emoji { font-size: 40px; }
+
+.maid-card__name {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  color: var(--ink);
+}
+.maid-card__specialty {
+  font-size: 16px;
+  color: var(--purple-deep);
+  line-height: 1;
+}
+.maid-card__cafe {
+  font-size: 15px;
+  opacity: 0.7;
+  line-height: 1;
+}

@@ -1,0 +1,29 @@
+.cafe-row {
+  --accent: var(--pink);
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  text-align: left;
+  box-shadow: 5px 5px 0 var(--accent);
+  align-items: flex-start;
+}
+.cafe-row__badge {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  background: color-mix(in srgb, var(--accent) 55%, white);
+  border: 3px solid var(--ink);
+}
+.cafe-row__info { flex: 1; min-width: 0; }
+.cafe-row__name {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.cafe-row__meta { font-size: 16px; opacity: 0.7; margin-top: 3px; }
+.cafe-row__vibe { font-size: 17px; margin-top: 3px; line-height: 1.05; }

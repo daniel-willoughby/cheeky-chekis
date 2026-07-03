@@ -1,0 +1,25 @@
+.friend-hero {
+  --accent: var(--purple);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  box-shadow: 5px 5px 0 var(--accent);
+}
+.friend-hero__avatar {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  background: color-mix(in srgb, var(--accent) 50%, white);
+  border: 3px solid var(--ink);
+}
+.friend-hero__name {
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  color: var(--purple-deep);
+}
+.friend-hero__bio { font-size: 18px; margin: 6px 0; line-height: 1.05; }

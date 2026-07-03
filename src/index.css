@@ -1,0 +1,146 @@
+:root {
+  /* palette */
+  --blue: #5b8def;
+  --blue-deep: #3a5fc4;
+  --pink: #ff8fc7;
+  --pink-deep: #e85fa6;
+  --purple: #9b6cff;
+  --purple-deep: #6f42d9;
+  --ink: #241b3a;
+  --paper: #fdf6ff;
+  --paper-2: #f0e6ff;
+  --paper-shadow: #d9c7f2;
+  --good: #5fd0a0;
+  --gold: #ffd35b;
+
+  --font-pixel: 'Press Start 2P', system-ui, sans-serif;
+  --font-body: 'VT323', 'Courier New', monospace;
+
+  --tabbar-h: 68px;
+
+  color-scheme: light;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background:
+    repeating-linear-gradient(45deg, #ffe1f0 0 12px, #ffd6ec 12px 24px);
+  overscroll-behavior: none;
+}
+
+img {
+  image-rendering: pixelated;
+}
+
+button {
+  font-family: var(--font-pixel);
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-pixel);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* pixel body text is large + readable */
+.body-text {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+/* the signature chunky pixel border (no border-radius, layered box-shadow) */
+.pixel-box {
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--purple-deep);
+}
+
+.pixel-inset {
+  border: 3px solid var(--ink);
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* generic chunky button */
+.btn {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--paper);
+  background: var(--purple);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 12px 14px;
+  transition: transform 0.04s, box-shadow 0.04s;
+}
+.btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.btn.pink { background: var(--pink); }
+.btn.blue { background: var(--blue); }
+.btn.ghost { background: var(--paper); color: var(--ink); }
+
+/* labels / chips */
+.chip {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  padding: 5px 7px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  display: inline-block;
+  white-space: nowrap;
+}
+.chip.blue { background: var(--blue); color: var(--paper); }
+.chip.pink { background: var(--pink); color: var(--ink); }
+.chip.purple { background: var(--purple); color: var(--paper); }
+.chip.gold { background: var(--gold); color: var(--ink); }
+.chip.good { background: var(--good); color: var(--ink); }
+
+/* scrollbars kept out of the way */
+::-webkit-scrollbar { width: 0; height: 0; }
+
+.screen {
+  padding: 16px 16px calc(var(--tabbar-h) + 24px);
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 100%;
+}
+
+.screen-title {
+  font-size: 18px;
+  color: var(--purple-deep);
+  text-shadow: 2px 2px 0 var(--paper);
+  margin-bottom: 14px;
+}
+
+a { color: var(--purple-deep); }
+
+.chip { cursor: pointer; }
+
+.pixel-select {
+  font-family: var(--font-body);
+  font-size: 20px;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.12);
+  color: var(--ink);
+  width: 100%;
+  resize: none;
+}
+select.pixel-select { cursor: pointer; }

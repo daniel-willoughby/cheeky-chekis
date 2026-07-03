@@ -1,0 +1,48 @@
+.cheki-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  text-align: left;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--purple-deep);
+  overflow: hidden;
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.cheki-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--purple-deep);
+}
+
+.cheki-card__photo {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-bottom: 3px solid var(--ink);
+  overflow: hidden;
+}
+
+.cheki-card__ship,
+.cheki-card__sale {
+  position: absolute;
+  left: 5px;
+}
+.cheki-card__ship { top: 5px; }
+.cheki-card__sale { bottom: 5px; right: 5px; left: auto; }
+
+.cheki-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  flex-wrap: wrap;
+}
+
+.cheki-card__name {
+  font-size: 18px;
+  line-height: 1;
+}
+.cheki-card__price {
+  margin-left: auto;
+  font-size: 18px;
+  color: var(--pink-deep);
+}

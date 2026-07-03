@@ -1,0 +1,26 @@
+.binder-designs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.binder-designs__swatch {
+  width: 46px;
+  height: 46px;
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 0;
+}
+.binder-designs__swatch.is-active {
+  outline: 3px solid var(--pink-deep);
+  outline-offset: 2px;
+}
+.binder-designs__shop {
+  width: 46px;
+  height: 46px;
+  border: 3px dashed var(--ink);
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--paper);
+}

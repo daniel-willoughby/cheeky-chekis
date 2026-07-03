@@ -1,0 +1,51 @@
+.cheki-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.section-label {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--ink);
+  margin: 22px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 3px;
+  background: var(--purple);
+}
+
+.empty {
+  padding: 20px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 20px;
+  opacity: 0.7;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.wrap { flex-wrap: wrap; }
+.scroll-x {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}

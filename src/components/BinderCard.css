@@ -1,0 +1,56 @@
+.binder-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: 92px;
+  padding: 0;
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.binder-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.binder-card__spine {
+  width: 16px;
+  border-right: 3px solid var(--ink);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.binder-card__body {
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.binder-card__name {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.binder-card__count { font-size: 16px; opacity: 0.8; }
+
+/* designs */
+.binder--classic { background: var(--paper-2); }
+.binder--sakura {
+  background: repeating-linear-gradient(45deg, #ffd7ec 0 10px, #ffc2e0 10px 20px);
+}
+.binder--midnight {
+  background: linear-gradient(160deg, #3a2f6b, #241b3a);
+}
+.binder--midnight .binder-card__name,
+.binder--midnight .binder-card__count { color: var(--paper); }
+.binder--arcade {
+  background: repeating-linear-gradient(90deg, var(--blue) 0 12px, var(--purple) 12px 24px);
+}
+.binder--arcade .binder-card__name,
+.binder--arcade .binder-card__count { color: var(--paper); }
+.binder--candy {
+  background: repeating-linear-gradient(0deg, #fff2b8 0 10px, #ffd35b 10px 20px);
+}
