@@ -16,6 +16,11 @@
 .login-card__emoji {
   font-size: 44px;
 }
+.login-card__logo {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+}
 
 .login-card__title {
   font-size: 18px;

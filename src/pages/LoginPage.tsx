@@ -24,7 +24,7 @@ export function LoginPage() {
   return (
     <div className="screen login-screen">
       <div className="login-card pixel-box">
-        <div className="login-card__emoji">📸</div>
+        <img src={`${import.meta.env.BASE_URL}icons/logo.png`} alt="" className="login-card__logo" />
         <h1 className="login-card__title">Cheeky Chekis</h1>
         <p className="body-text login-card__blurb">
           Collect, tag and share your maid cafe chekis.

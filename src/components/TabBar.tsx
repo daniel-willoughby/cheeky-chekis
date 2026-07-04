@@ -5,7 +5,7 @@ import './TabBar.css';
 const base = import.meta.env.BASE_URL;
 
 const tabs = [
-  { to: '/', icon: '🎮', label: 'Profile', end: true },
+  { to: '/', icon: '🎮', art: `${base}ui-icons/profile.png`, label: 'Profile', end: true },
   { to: '/friends', icon: '👾', art: `${base}ui-icons/friends.png`, label: 'Friends' },
   { to: '/cafes', icon: '🏠', art: `${base}ui-icons/cafes.png`, label: 'Cafes' },
   { to: '/sales', icon: '🏷️', art: `${base}ui-icons/sales.png`, label: 'Sales' },
