@@ -100,9 +100,9 @@ export function ProfilePage() {
           )}
         </div>
         <div className="profile-hero__info">
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="row wrap" style={{ justifyContent: 'space-between' }}>
             <h1 className="profile-hero__name">{profile?.name ?? 'You'}</h1>
-            <button className="chip purple" onClick={startEdit}>EDIT</button>
+            <button className="chip purple" style={{ flexShrink: 0 }} onClick={startEdit}>EDIT</button>
           </div>
           {editing ? (
             <div style={{ marginTop: 6 }}>

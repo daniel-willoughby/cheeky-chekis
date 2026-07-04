@@ -269,8 +269,8 @@ export const useCafes = (): Cafe[] | undefined =>
 export const useCafe = (id?: string): Cafe | undefined =>
   useQuery(async () => {
     if (!id) return undefined;
-    const row = await run(supabase.from('cafes').select('*').eq('id', id).single());
-    return mapCafe(row);
+    const row = await run(supabase.from('cafes').select('*').eq('id', id).maybeSingle());
+    return row ? mapCafe(row) : undefined;
   }, [id]);
 
 export const useMaids = (): Maid[] | undefined =>
@@ -279,8 +279,8 @@ export const useMaids = (): Maid[] | undefined =>
 export const useMaid = (id?: string): Maid | undefined =>
   useQuery(async () => {
     if (!id) return undefined;
-    const row = await run(supabase.from('maids').select('*').eq('id', id).single());
-    return mapMaid(row);
+    const row = await run(supabase.from('maids').select('*').eq('id', id).maybeSingle());
+    return row ? mapMaid(row) : undefined;
   }, [id]);
 
 export const useMaidsByCafe = (cafeId?: string): Maid[] | undefined =>
@@ -340,7 +340,6 @@ export async function createCafe(input: {
 export async function createMaid(input: {
   cafeId: string;
   name: string;
-  specialty: string;
   bio: string;
   hairColor?: string;
   emoji?: string;
@@ -352,7 +351,7 @@ export async function createMaid(input: {
       .insert({
         cafe_id: input.cafeId,
         name: input.name,
-        specialty: input.specialty,
+        specialty: '',
         bio: input.bio,
         hair_color: input.hairColor || 'pink',
         emoji: input.emoji || '🌸',
@@ -467,6 +466,34 @@ export async function addCheki(
   return row.id;
 }
 
+export async function updateCheki(
+  chekiId: string,
+  patch: { type?: ChekiType; maidIds?: string[]; date?: string },
+): Promise<void> {
+  const dbPatch: Row = {};
+  if (patch.type !== undefined) dbPatch.type = patch.type;
+  if (patch.maidIds !== undefined) dbPatch.maid_ids = patch.maidIds;
+  if (patch.date !== undefined) dbPatch.date = patch.date;
+  await writeChecked(supabase.from('chekis').update(dbPatch).eq('id', chekiId));
+  bump();
+}
+
+// A cheki lives in at most one binder. Passing null takes it out of binders.
+export const useChekiBinderId = (chekiId?: string): string | undefined =>
+  useQuery(async () => {
+    if (!chekiId) return undefined;
+    const row = await run(supabase.from('binder_chekis').select('binder_id').eq('cheki_id', chekiId).maybeSingle());
+    return row?.binder_id ?? undefined;
+  }, [chekiId]);
+
+export async function setChekiBinder(chekiId: string, binderId: string | null): Promise<void> {
+  await run(supabase.from('binder_chekis').delete().eq('cheki_id', chekiId));
+  if (binderId) {
+    await run(supabase.from('binder_chekis').upsert({ binder_id: binderId, cheki_id: chekiId }));
+  }
+  bump();
+}
+
 export async function toggleForSale(cheki: Cheki, price?: number): Promise<void> {
   const nextForSale = !cheki.forSale;
   await writeChecked(
@@ -482,6 +509,21 @@ export async function toggleForSale(cheki: Cheki, price?: number): Promise<void>
 export async function markSold(cheki: Cheki): Promise<void> {
   if (cheki.sold) return;
   await writeChecked(supabase.from('chekis').update({ sold: true, for_sale: false }).eq('id', cheki.id));
+  await awardPoints(cheki.ownerId, POINTS.sold);
+  bump();
+}
+
+// Sold to a friend: transfers the cheki into their collection via a
+// SECURITY DEFINER function (RLS won't let a plain update change owner_id).
+export async function markSoldToFriend(cheki: Cheki, friendId: string): Promise<void> {
+  const { error } = await supabase.rpc('transfer_cheki_to_friend', {
+    p_cheki_id: cheki.id,
+    p_new_owner: friendId,
+  });
+  if (error) {
+    pushToast(error.message);
+    throw new Error(error.message);
+  }
   await awardPoints(cheki.ownerId, POINTS.sold);
   bump();
 }
@@ -521,8 +563,8 @@ export const useMyBinders = (): Binder[] | undefined => {
 export const useBinder = (id?: string): Binder | undefined =>
   useQuery(async () => {
     if (!id) return undefined;
-    const row = await run(supabase.from('binders').select('*').eq('id', id).single());
-    return mapBinder(row);
+    const row = await run(supabase.from('binders').select('*').eq('id', id).maybeSingle());
+    return row ? mapBinder(row) : undefined;
   }, [id]);
 
 export const useBinderChekis = (binderId?: string): Cheki[] | undefined =>
@@ -572,8 +614,8 @@ export const useFriends = (): PublicProfile[] | undefined => {
 export const useFriend = (id?: string): PublicProfile | undefined =>
   useQuery(async () => {
     if (!id) return undefined;
-    const row = await run(supabase.from('profiles').select('*').eq('id', id).single());
-    return mapPublicProfile(row);
+    const row = await run(supabase.from('profiles').select('*').eq('id', id).maybeSingle());
+    return row ? mapPublicProfile(row) : undefined;
   }, [id]);
 
 // incoming pending requests, with the requester's public profile attached

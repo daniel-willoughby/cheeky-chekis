@@ -31,7 +31,6 @@ export function MaidCard({
       <div className="maid-card__name">{maid.name}</div>
       {!compact && (
         <>
-          <div className="maid-card__specialty body-text">{maid.specialty}</div>
           {maid.bio && <div className="maid-card__desc body-text">{maid.bio}</div>}
           {cafeName && <div className="maid-card__cafe body-text">{cafeName}</div>}
           {maid.graduated && <div className="chip muted" style={{ marginTop: 6 }}>GRADUATED</div>}

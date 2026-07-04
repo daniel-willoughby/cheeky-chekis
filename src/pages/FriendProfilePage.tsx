@@ -54,7 +54,9 @@ export function FriendProfilePage() {
       <BackHeader title={friend.name} />
 
       <div className="friend-hero pixel-box" style={{ ['--accent' as string]: friend.color }}>
-        <div className="friend-hero__avatar">{friend.emoji}</div>
+        <div className="friend-hero__avatar">
+          {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="friend-hero__avatar-img" /> : friend.emoji}
+        </div>
         <div>
           <div className="friend-hero__name">{friend.name}</div>
           {friend.bio && <p className="body-text friend-hero__bio">{friend.bio}</p>}

@@ -18,7 +18,7 @@ export function CafeDetailPage() {
   const [draft, setDraft] = useState({ district: '', manager: '', chekiPrice: '', vibe: '', rules: '' });
   const [typePrices, setTypePrices] = useState<Partial<Record<ChekiType, string>>>({});
   const [addingMaid, setAddingMaid] = useState(false);
-  const [maidDraft, setMaidDraft] = useState({ name: '', specialty: '', bio: '' });
+  const [maidDraft, setMaidDraft] = useState({ name: '', bio: '' });
   const [savingMaid, setSavingMaid] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -43,12 +43,11 @@ export function CafeDetailPage() {
     await createMaid({
       cafeId,
       name: maidDraft.name.trim(),
-      specialty: maidDraft.specialty.trim(),
       bio: maidDraft.bio.trim(),
     });
     setSavingMaid(false);
     setAddingMaid(false);
-    setMaidDraft({ name: '', specialty: '', bio: '' });
+    setMaidDraft({ name: '', bio: '' });
   }
 
   function startEdit() {
@@ -132,7 +131,7 @@ export function CafeDetailPage() {
           <button className="btn" style={{ flex: 1 }} onClick={save}>SAVE</button>
         </div>
 
-        <EditField label="DANGER ZONE">
+        <EditField label="WATCH OUT!">
           {confirmDelete ? (
             <div className="row" style={{ gap: 8 }}>
               <span className="body-text" style={{ fontSize: 15, flex: 1 }}>Delete {cafe.name} and all its maids?</span>
@@ -193,7 +192,6 @@ export function CafeDetailPage() {
         <div className="pixel-box" style={{ padding: 14, marginTop: 14 }}>
           <div className="section-label" style={{ marginTop: 0 }}>NEW MAID</div>
           <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} placeholder="Name" value={maidDraft.name} onChange={(e) => setMaidDraft({ ...maidDraft, name: e.target.value })} autoFocus />
-          <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} placeholder="Specialty (e.g. Song requests)" value={maidDraft.specialty} onChange={(e) => setMaidDraft({ ...maidDraft, specialty: e.target.value })} />
           <textarea className="pixel-select" style={{ width: '100%' }} rows={2} placeholder="Short bio" value={maidDraft.bio} onChange={(e) => setMaidDraft({ ...maidDraft, bio: e.target.value })} />
           <div className="row" style={{ gap: 8, marginTop: 12 }}>
             <button className="btn ghost" style={{ flex: 1 }} onClick={() => setAddingMaid(false)}>CANCEL</button>

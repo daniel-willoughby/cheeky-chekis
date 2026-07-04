@@ -105,7 +105,9 @@ export function FriendsPage() {
             style={{ ['--accent' as string]: f.color }}
             onClick={() => navigate(`/friends/${f.id}`)}
           >
-            <span className="friend-chip__emoji">{f.emoji}</span>
+            <span className="friend-chip__emoji">
+              {f.avatarUrl ? <img src={f.avatarUrl} alt="" className="friend-chip__avatar-img" /> : f.emoji}
+            </span>
             <span className="friend-chip__name">{f.name}</span>
           </button>
         ))}
@@ -118,7 +120,9 @@ export function FriendsPage() {
         {(activity ?? []).map((a) => (
           <div key={a.friend.id} className="share-card pixel-box" style={{ ['--accent' as string]: a.friend.color }}>
             <button className="share-card__head" onClick={() => navigate(`/friends/${a.friend.id}`)}>
-              <span className="share-card__avatar">{a.friend.emoji}</span>
+              <span className="share-card__avatar">
+                {a.friend.avatarUrl ? <img src={a.friend.avatarUrl} alt="" className="share-card__avatar-img" /> : a.friend.emoji}
+              </span>
               <div style={{ flex: 1, textAlign: 'left' }}>
                 <div className="share-card__name">{a.friend.name} · {a.chekis.length} chekis</div>
               </div>

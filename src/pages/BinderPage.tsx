@@ -40,7 +40,7 @@ export function BinderPage() {
         </>
       )}
 
-      {chekis && chekis.length === 0 && <div className="empty pixel-box">This binder is empty.</div>}
+      {chekis && chekis.length === 0 && <div className="empty pixel-box">Nothing here yet (·•᷄∩•᷅ )</div>}
       <ChekiGrid chekis={chekis ?? []} />
     </div>
   );

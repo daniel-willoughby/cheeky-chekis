@@ -1,4 +1,4 @@
-export type ChekiType = 'pin' | '4-cut' | 'homework' | 'twin' | 'group' | 'grid';
+export type ChekiType = 'regular' | 'pin' | '4-cut' | 'homework' | 'twin' | 'group' | 'grid';
 export type ChekiStatus = 'on-hand' | 'on-the-way';
 
 // Types that can feature more than one maid.

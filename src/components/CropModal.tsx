@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { getCroppedBlob } from '../data/cropImage';
@@ -36,7 +37,7 @@ export function CropModal({
     onDone(blob, URL.createObjectURL(blob));
   }
 
-  return (
+  return createPortal(
     <div className="crop-backdrop">
       <div className="crop-modal pixel-box">
         <div className="crop-title">CROP YOUR PHOTO</div>
@@ -58,6 +59,7 @@ export function CropModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

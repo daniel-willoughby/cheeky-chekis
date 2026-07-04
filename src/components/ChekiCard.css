@@ -16,7 +16,7 @@
 
 .cheki-card__photo {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 3 / 4.4;
   border-bottom: 3px solid var(--ink);
   overflow: hidden;
 }

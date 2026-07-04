@@ -20,7 +20,7 @@ export function MaidDetailPage() {
   const myChekis = maidId ? (allMyChekis ?? []).filter((c) => c.maidIds.includes(maidId)) : [];
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ name: '', specialty: '', bio: '', graduated: false });
+  const [draft, setDraft] = useState({ name: '', bio: '', graduated: false });
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -31,14 +31,13 @@ export function MaidDetailPage() {
 
   function startEdit() {
     if (!maid) return;
-    setDraft({ name: maid.name, specialty: maid.specialty, bio: maid.bio, graduated: maid.graduated });
+    setDraft({ name: maid.name, bio: maid.bio, graduated: maid.graduated });
     setEditing(true);
   }
   async function save() {
     if (!maidId) return;
     await updateMaid(maidId, {
       name: draft.name.trim(),
-      specialty: draft.specialty.trim(),
       bio: draft.bio.trim(),
       graduated: draft.graduated,
     });
@@ -66,7 +65,6 @@ export function MaidDetailPage() {
           {editing ? (
             <>
               <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Name" />
-              <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} value={draft.specialty} onChange={(e) => setDraft({ ...draft, specialty: e.target.value })} placeholder="Specialty" />
               <textarea className="pixel-select" style={{ width: '100%', marginBottom: 8 }} rows={3} value={draft.bio} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} placeholder="Bio" />
               <div className="row" style={{ marginBottom: 8 }}>
                 <ImageUploadButton folder={`maids/${maidId}`} label="MAID PHOTO" onUploaded={(path) => { if (maidId) return setMaidImage(maidId, path); }} />
@@ -96,7 +94,6 @@ export function MaidDetailPage() {
             <>
               <p className="body-text" style={{ fontSize: 19, marginTop: 0 }}>{maid.bio}</p>
               <div className="row wrap" style={{ marginBottom: 10 }}>
-                <span className="chip purple">{maid.specialty}</span>
                 {cafe && <span className="chip blue">{cafe.name}</span>}
               </div>
               <button
@@ -115,7 +112,7 @@ export function MaidDetailPage() {
 
       <div className="section-label">MY CHEKIS OF {maid.name.toUpperCase()}</div>
       {myChekis.length === 0 && (
-        <div className="empty pixel-box">None yet. Go collect one!</div>
+        <div className="empty pixel-box">This is too empty ૮₍•᷄ ࡇ •᷅₎ა</div>
       )}
       <ChekiGrid chekis={myChekis} />
     </div>

@@ -29,7 +29,7 @@ export function SalesPage() {
     <div className="screen">
       <h1 className="screen-title">For Sale Market</h1>
       <p className="body-text" style={{ fontSize: 18, marginTop: -6 }}>
-        The shared binder everyone sells from.
+        Give your cheeky chekis a new home! ₍^. .^₎⟆
       </p>
 
       <div className="scroll-x" style={{ marginTop: 8 }}>
