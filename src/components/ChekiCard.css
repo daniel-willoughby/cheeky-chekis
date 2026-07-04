@@ -28,6 +28,7 @@
 }
 .cheki-card__ship { top: 5px; }
 .cheki-card__sale { bottom: 5px; right: 5px; left: auto; }
+.cheki-card__life { position: absolute; bottom: 5px; left: 5px; }
 
 .cheki-card__foot {
   display: flex;
@@ -58,8 +59,8 @@
   cursor: pointer;
 }
 .cheki-card__like-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   opacity: 0.35;
   filter: grayscale(1);
 }

@@ -556,9 +556,11 @@ export async function toggleForSale(cheki: Cheki, price?: number): Promise<void>
   bump();
 }
 
-// Classify a for-sale cheki as sold. Awards points once, pulls it off the market.
+// Classify a for-sale cheki as sold. Awards points per completed sale and
+// pulls it off the market. Received (Second Life) chekis are already
+// sold=true, so the guard checks the active listing instead.
 export async function markSold(cheki: Cheki): Promise<void> {
-  if (cheki.sold) return;
+  if (cheki.sold && !cheki.forSale) return;
   await writeChecked(supabase.from('chekis').update({ sold: true, for_sale: false }).eq('id', cheki.id));
   await awardPoints(cheki.ownerId, POINTS.sold);
   bump();

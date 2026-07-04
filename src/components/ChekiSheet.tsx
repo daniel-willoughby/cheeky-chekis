@@ -232,7 +232,7 @@ export function ChekiSheet({
                 </button>
               )}
 
-              {mine && !cheki.sold && !cheki.transferPendingTo && !cheki.settlementOf && (
+              {mine && !cheki.transferPendingTo && !cheki.settlementOf && (
                 <button className="chip purple" style={{ alignSelf: 'flex-start' }} onClick={startEdit}>EDIT</button>
               )}
 
@@ -252,7 +252,7 @@ export function ChekiSheet({
                 </div>
               )}
 
-              {mine && !cheki.sold && !cheki.transferPendingTo && !cheki.settlementOf && (
+              {mine && (!cheki.sold || cheki.receivedFrom) && !cheki.transferPendingTo && !cheki.settlementOf && (
                 <div className="sheet__sell">
                   {feedback ? (
                     <button className="btn muted" style={{ width: '100%' }} disabled>

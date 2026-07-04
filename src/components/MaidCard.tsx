@@ -25,7 +25,7 @@ export function MaidCard({
         {maid.imageUrl ? (
           <img src={maid.imageUrl} alt="" className="maid-card__portrait-img" />
         ) : (
-          <span className="maid-card__emoji">{maid.emoji}</span>
+          <img src={`${import.meta.env.BASE_URL}icons/mystery.png`} alt="" className="maid-card__mystery" />
         )}
       </div>
       <div className="maid-card__name">{maid.name}</div>
