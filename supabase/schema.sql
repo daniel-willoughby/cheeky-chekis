@@ -11,7 +11,7 @@ create table if not exists profiles (
   bio text not null default '',
   favourite_maid_ids uuid[] not null default '{}',
   points int not null default 0,
-  owned_designs text[] not null default '{classic,sakura,midnight}',
+  owned_designs text[] not null default '{classic}',
   last_login_at date,
   last_seen_friends_at timestamptz,
   created_at timestamptz not null default now()

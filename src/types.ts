@@ -22,10 +22,9 @@ export interface Cheki {
 
 export type BinderDesign =
   | 'classic'
-  | 'sakura'
-  | 'midnight'
-  | 'arcade'
-  | 'candy'
+  | 'pastel-pink'
+  | 'pastel-blue'
+  | 'lilac'
   | 'butterfly'
   | 'cheki-secret'
   | 'cloud'

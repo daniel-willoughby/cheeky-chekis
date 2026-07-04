@@ -38,22 +38,9 @@
 
 /* designs */
 .binder--classic { background: var(--paper-2); }
-.binder--sakura {
-  background: repeating-linear-gradient(45deg, #ffd7ec 0 10px, #ffc2e0 10px 20px);
-}
-.binder--midnight {
-  background: linear-gradient(160deg, #3a2f6b, #241b3a);
-}
-.binder--midnight .binder-card__name,
-.binder--midnight .binder-card__count { color: var(--paper); }
-.binder--arcade {
-  background: repeating-linear-gradient(90deg, var(--blue) 0 12px, var(--purple) 12px 24px);
-}
-.binder--arcade .binder-card__name,
-.binder--arcade .binder-card__count { color: var(--paper); }
-.binder--candy {
-  background: repeating-linear-gradient(0deg, #fff2b8 0 10px, #ffd35b 10px 20px);
-}
+.binder--pastel-pink { background: #ffd7ec; }
+.binder--pastel-blue { background: #cfe3fb; }
+.binder--lilac { background: #ded1f7; }
 
 /* pattern-art designs (image set via inline style, background-color is a fallback) */
 .binder--gingham { background-color: #9ec8f5; }
