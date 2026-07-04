@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useProfile,
@@ -18,6 +18,7 @@ import { CHEKI_TYPES } from '../data/chekiMeta';
 import { DESIGNS } from '../data/designs';
 import { MaidCard } from '../components/MaidCard';
 import { ChekiGrid } from '../components/ChekiGrid';
+import { Pager, CHEKIS_PAGE_SIZE } from '../components/Pager';
 import { BinderCard } from '../components/BinderCard';
 import { ImageUploadButton } from '../components/ImageUploadButton';
 import { pushToast } from '../data/toast';
@@ -36,6 +37,7 @@ export function ProfilePage() {
   const [filterType, setFilterType] = useState<ChekiType | 'all'>('all');
   const [filterMaid, setFilterMaid] = useState('');
   const [filterCafe, setFilterCafe] = useState('');
+  const [page, setPage] = useState(0);
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [bioDraft, setBioDraft] = useState('');
@@ -72,6 +74,11 @@ export function ProfilePage() {
       ),
     [chekis, filterType, filterMaid, filterCafe],
   );
+  const pageCount = Math.max(1, Math.ceil(filteredChekis.length / CHEKIS_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedChekis = filteredChekis.slice(currentPage * CHEKIS_PAGE_SIZE, (currentPage + 1) * CHEKIS_PAGE_SIZE);
+
+  useEffect(() => setPage(0), [filterType, filterMaid, filterCafe]);
 
   function startEdit() {
     setNameDraft(profile?.name ?? '');
@@ -102,7 +109,10 @@ export function ProfilePage() {
         <div className="profile-hero__info">
           <div className="row wrap" style={{ justifyContent: 'space-between' }}>
             <h1 className="profile-hero__name">{profile?.name ?? 'You'}</h1>
-            <button className="chip purple" style={{ flexShrink: 0 }} onClick={startEdit}>EDIT</button>
+            <div className="row" style={{ gap: 6, flexShrink: 0 }}>
+              <button className="chip" onClick={() => navigate('/settings')}>⚙️</button>
+              <button className="chip purple" onClick={startEdit}>EDIT</button>
+            </div>
           </div>
           {editing ? (
             <div style={{ marginTop: 6 }}>
@@ -232,7 +242,8 @@ export function ProfilePage() {
         <div className="empty pixel-box" style={{ marginTop: 12 }}>No chekis match.</div>
       )}
       <div style={{ marginTop: 12 }}>
-        <ChekiGrid chekis={filteredChekis} />
+        <ChekiGrid chekis={pagedChekis} />
+        <Pager page={currentPage} pageCount={pageCount} onPage={setPage} />
       </div>
 
       <button className="btn ghost" style={{ marginTop: 22, width: '100%' }} onClick={signOut}>

@@ -1,0 +1,18 @@
+.settings-logo {
+  font-size: 48px;
+  text-align: center;
+  margin: 6px 0 16px;
+}
+
+.settings-row {
+  padding: 12px 14px;
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.settings-row__label {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--purple-deep);
+}

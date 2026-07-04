@@ -46,3 +46,13 @@
   font-size: 18px;
   color: var(--pink-deep);
 }
+.cheki-card__like {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--pink-deep);
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.cheki-card__like.is-liked { color: var(--pink-deep); }
+.cheki-card__like:active { transform: scale(0.9); }

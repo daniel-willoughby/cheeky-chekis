@@ -15,6 +15,8 @@ import {
   useMaidsByCafe,
   useMyBinders,
   useFriends,
+  useChekiLikes,
+  toggleChekiLike,
   formatKRW,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
@@ -49,6 +51,9 @@ export function ChekiSheet({
   const binders = useMyBinders();
   const currentBinderId = useChekiBinderId(cheki.id);
   const friends = useFriends();
+  const likes = useChekiLikes([cheki.id]);
+  const likeCount = likes?.counts.get(cheki.id) ?? 0;
+  const liked = !!(userId && likes?.likedBy.get(cheki.id)?.has(userId));
 
   const [draftType, setDraftType] = useState<ChekiType>(cheki.type);
   const [draftMaidIds, setDraftMaidIds] = useState<string[]>(cheki.maidIds);
@@ -183,6 +188,14 @@ export function ChekiSheet({
                 </span>
                 {cheki.forSale && <span className="chip pink">{formatKRW(cheki.price)}</span>}
                 {cheki.sold && <span className="chip gold">SOLD</span>}
+                {userId && (
+                  <button
+                    className="sheet__like body-text"
+                    onClick={() => toggleChekiLike(cheki.id, userId, liked)}
+                  >
+                    {liked ? '♥' : '♡'} {likeCount > 0 ? likeCount : ''}
+                  </button>
+                )}
               </div>
 
               {maids.length > 0 && (
@@ -267,7 +280,9 @@ export function ChekiSheet({
             <div style={{ marginTop: 14 }}>
               {confirmDelete ? (
                 <div className="row" style={{ gap: 8 }}>
-                  <span className="body-text" style={{ fontSize: 15, flex: 1 }}>Delete this cheki for good?</span>
+                  <span className="body-text" style={{ fontSize: 15, flex: 1 }}>
+                    Are you sure you want to delete this cheki? ｡°(°¯᷄◠¯᷅°)°｡
+                  </span>
                   <button className="btn ghost" disabled={deleting} onClick={() => setConfirmDelete(false)}>NO</button>
                   <button className="btn pink" disabled={deleting} onClick={remove}>{deleting ? '...' : 'DELETE'}</button>
                 </div>

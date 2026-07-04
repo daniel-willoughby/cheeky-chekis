@@ -499,6 +499,36 @@ export async function deleteCheki(chekiId: string): Promise<void> {
   bump();
 }
 
+// ---------- cheki likes ----------
+
+export interface ChekiLikes {
+  counts: Map<string, number>;
+  likedBy: Map<string, Set<string>>;
+}
+
+export const useChekiLikes = (chekiIds: string[]): ChekiLikes | undefined =>
+  useQuery(async () => {
+    if (chekiIds.length === 0) return { counts: new Map(), likedBy: new Map() };
+    const rows = await run(supabase.from('cheki_likes').select('cheki_id, user_id').in('cheki_id', chekiIds));
+    const counts = new Map<string, number>();
+    const likedBy = new Map<string, Set<string>>();
+    for (const r of rows as Row[]) {
+      counts.set(r.cheki_id, (counts.get(r.cheki_id) ?? 0) + 1);
+      if (!likedBy.has(r.cheki_id)) likedBy.set(r.cheki_id, new Set());
+      likedBy.get(r.cheki_id)!.add(r.user_id);
+    }
+    return { counts, likedBy };
+  }, [chekiIds.slice().sort().join(',')]);
+
+export async function toggleChekiLike(chekiId: string, userId: string, liked: boolean): Promise<void> {
+  if (liked) {
+    await run(supabase.from('cheki_likes').delete().eq('cheki_id', chekiId).eq('user_id', userId));
+  } else {
+    await run(supabase.from('cheki_likes').insert({ cheki_id: chekiId, user_id: userId }));
+  }
+  bump();
+}
+
 export async function toggleForSale(cheki: Cheki, price?: number): Promise<void> {
   const nextForSale = !cheki.forSale;
   await writeChecked(

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   useFriend,
@@ -12,6 +12,7 @@ import { CHEKI_TYPES } from '../data/chekiMeta';
 import { BackHeader } from '../components/BackHeader';
 import { BinderCard } from '../components/BinderCard';
 import { ChekiGrid } from '../components/ChekiGrid';
+import { Pager, CHEKIS_PAGE_SIZE } from '../components/Pager';
 import type { ChekiType } from '../types';
 import './common.css';
 import './FriendProfilePage.css';
@@ -29,6 +30,7 @@ export function FriendProfilePage() {
   const [type, setType] = useState<ChekiType | 'all'>('all');
   const [maidId, setMaidId] = useState('');
   const [cafeId, setCafeId] = useState('');
+  const [page, setPage] = useState(0);
 
   // only maids/cafes that appear in this friend's collection
   const ownMaidIds = new Set((chekis ?? []).flatMap((c) => c.maidIds));
@@ -46,6 +48,11 @@ export function FriendProfilePage() {
       ),
     [chekis, type, maidId, cafeId],
   );
+  const pageCount = Math.max(1, Math.ceil(filtered.length / CHEKIS_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedChekis = filtered.slice(currentPage * CHEKIS_PAGE_SIZE, (currentPage + 1) * CHEKIS_PAGE_SIZE);
+
+  useEffect(() => setPage(0), [type, maidId, cafeId]);
 
   if (!friend) return <div className="screen"><BackHeader title="Friend" /></div>;
 
@@ -95,7 +102,10 @@ export function FriendProfilePage() {
         {filtered.length === 0 ? (
           <div className="empty pixel-box">No chekis match.</div>
         ) : (
-          <ChekiGrid chekis={filtered} />
+          <>
+            <ChekiGrid chekis={pagedChekis} />
+            <Pager page={currentPage} pageCount={pageCount} onPage={setPage} />
+          </>
         )}
       </div>
     </div>

@@ -53,4 +53,11 @@
   padding: 0;
 }
 .sheet__muted { font-size: 18px; opacity: 0.75; }
+.sheet__like {
+  font-family: var(--font-body);
+  font-size: 22px;
+  color: var(--pink-deep);
+  padding: 0 4px;
+}
+.sheet__like:active { transform: scale(0.92); }
 .sheet__sell { margin-top: 8px; }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForSaleChekis, useMaids, usePublicProfilesByIds, formatKRW } from '../data/hooks';
+import { useForSaleChekis, useMaids, usePublicProfilesByIds, useChekiLikes, toggleChekiLike, formatKRW } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { ChekiCard } from '../components/ChekiCard';
 import { ChekiSheet } from '../components/ChekiSheet';
@@ -24,6 +24,7 @@ export function SalesPage() {
 
   const items = (forSale ?? []).filter((c) => filter === 'all' || c.type === filter);
   const total = items.reduce((s, c) => s + (c.price ?? 0), 0);
+  const likes = useChekiLikes(items.map((c) => c.id));
 
   return (
     <div className="screen">
@@ -47,12 +48,22 @@ export function SalesPage() {
 
       {items.length === 0 && <div className="empty pixel-box">Nothing for sale here yet.</div>}
       <div className="cheki-grid">
-        {items.map((c) => (
-          <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <ChekiCard cheki={c} maids={maidsFor(c)} onClick={() => setOpen(c)} />
-            <span className="chip pink" style={{ alignSelf: 'flex-start' }}>@{sellerName(c.ownerId)}</span>
-          </div>
-        ))}
+        {items.map((c) => {
+          const liked = !!(userId && likes?.likedBy.get(c.id)?.has(userId));
+          return (
+            <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <ChekiCard
+                cheki={c}
+                maids={maidsFor(c)}
+                onClick={() => setOpen(c)}
+                likeCount={likes?.counts.get(c.id) ?? 0}
+                liked={liked}
+                onToggleLike={userId ? () => toggleChekiLike(c.id, userId, liked) : undefined}
+              />
+              <span className="chip pink" style={{ alignSelf: 'flex-start' }}>@{sellerName(c.ownerId)}</span>
+            </div>
+          );
+        })}
       </div>
 
       {open && (
