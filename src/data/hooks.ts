@@ -40,6 +40,7 @@ function mapCheki(row: Row): Cheki {
     price: row.price ?? undefined,
     notes: row.notes ?? undefined,
     settlementOf: row.settlement_of ?? undefined,
+    receivedFrom: row.received_from ?? undefined,
     createdAt: Date.parse(row.created_at),
   };
 }

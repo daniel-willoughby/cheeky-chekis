@@ -26,7 +26,9 @@ export function ChekiCard({
         {cheki.status === 'on-the-way' && (
           <span className="cheki-card__ship chip blue">ON THE WAY</span>
         )}
-        {cheki.sold ? (
+        {cheki.receivedFrom ? (
+          <span className="cheki-card__sale chip gold">SECOND LIFE</span>
+        ) : cheki.sold ? (
           <span className="cheki-card__sale chip gold">SOLD</span>
         ) : (
           cheki.forSale && <span className="cheki-card__sale chip pink">FOR SALE</span>

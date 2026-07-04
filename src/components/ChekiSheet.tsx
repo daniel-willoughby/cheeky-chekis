@@ -18,6 +18,7 @@ import {
   useChekiLikes,
   toggleChekiLike,
   useSettlementsOf,
+  usePublicProfilesByIds,
   formatKRW,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
@@ -57,6 +58,8 @@ export function ChekiSheet({
   const likes = useChekiLikes([cheki.id]);
   const likeCount = likes?.counts.get(cheki.id) ?? 0;
   const liked = !!(userId && likes?.likedBy.get(cheki.id)?.has(userId));
+  const givers = usePublicProfilesByIds(cheki.receivedFrom ? [cheki.receivedFrom] : []);
+  const giver = cheki.receivedFrom ? givers?.get(cheki.receivedFrom) : undefined;
 
   const [draftType, setDraftType] = useState<ChekiType>(cheki.type);
   const [draftMaidIds, setDraftMaidIds] = useState<string[]>(cheki.maidIds);
@@ -190,7 +193,11 @@ export function ChekiSheet({
                   {cheki.status === 'on-hand' ? 'ON HAND' : 'ON THE WAY'}
                 </span>
                 {cheki.forSale && <span className="chip pink">{formatKRW(cheki.price)}</span>}
-                {cheki.sold && <span className="chip gold">SOLD</span>}
+                {cheki.receivedFrom ? (
+                  <span className="chip gold">SECOND LIFE</span>
+                ) : (
+                  cheki.sold && <span className="chip gold">SOLD</span>
+                )}
                 {userId && (
                   <button
                     className={`sheet__like body-text${liked ? ' is-liked' : ''}`}
@@ -213,6 +220,11 @@ export function ChekiSheet({
               )}
               {cafe && <div className="body-text sheet__muted">{cafe.name}</div>}
               {cheki.date && <div className="body-text sheet__muted">Taken {cheki.date}</div>}
+              {giver && (
+                <button className="sheet__link body-text" onClick={() => { onClose(); navigate(`/friends/${giver.id}`); }}>
+                  Second life from @{giver.username}
+                </button>
+              )}
 
               {mine && !cheki.sold && (
                 <button className="chip purple" style={{ alignSelf: 'flex-start' }} onClick={startEdit}>EDIT</button>

@@ -18,6 +18,7 @@ export interface Cheki {
   price?: number;         // in KRW
   notes?: string;
   settlementOf?: string;  // parent cheki id, if this is a settlement photo
+  receivedFrom?: string;  // friend's profile id, if received via sold-to-friend transfer
   createdAt: number;
 }
 

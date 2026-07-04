@@ -143,6 +143,9 @@ create table if not exists chekis (
   -- parent cheki; it inherits the parent's classifications and is hidden
   -- from the normal collection views.
   settlement_of uuid references chekis(id) on delete cascade,
+  -- set when this cheki was received via a friend's sold-to-friend transfer;
+  -- points at the friend who gave it away, drives the "Second Life" tag.
+  received_from uuid references profiles(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -224,7 +227,7 @@ begin
   end if;
 
   update chekis
-    set owner_id = p_new_owner, sold = true, for_sale = false, price = null
+    set owner_id = p_new_owner, sold = true, for_sale = false, price = null, received_from = v_owner
     where id = p_cheki_id;
 
   delete from binder_chekis
