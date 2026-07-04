@@ -687,6 +687,11 @@ export async function addChekiToBinder(chekiId: string, binderId: string): Promi
 
 export const SETTLEMENTS_BINDER_NAME = 'Cheki Settlements';
 
+// The settlements binder is system-managed: hidden from binder pickers and
+// filled automatically when settlement photos are attached to a cheki.
+export const isSettlementsBinder = (b: { name: string }): boolean =>
+  b.name === SETTLEMENTS_BINDER_NAME;
+
 // Find (or lazily create) the user's dedicated settlements binder.
 async function ensureSettlementsBinder(userId: string): Promise<string> {
   const existing = await run(
@@ -695,9 +700,9 @@ async function ensureSettlementsBinder(userId: string): Promise<string> {
       .select('id')
       .eq('owner_id', userId)
       .eq('name', SETTLEMENTS_BINDER_NAME)
-      .maybeSingle(),
+      .limit(1),
   );
-  if (existing?.id) return existing.id;
+  if (existing?.[0]?.id) return existing[0].id;
   const row = await run(
     supabase
       .from('binders')
@@ -832,7 +837,12 @@ export const useFriendActivity = (): FriendActivity[] | undefined => {
     if (!friends || friends.length === 0) return [];
     const ids = friends.map((f) => f.id);
     const rows = await run(
-      supabase.from('chekis').select('*').in('owner_id', ids).order('created_at', { ascending: false }),
+      supabase
+        .from('chekis')
+        .select('*')
+        .in('owner_id', ids)
+        .is('settlement_of', null)
+        .order('created_at', { ascending: false }),
     );
     const chekis = rows.map(mapCheki);
     const byOwner = new Map<string, Cheki[]>();

@@ -20,6 +20,7 @@ import {
   toggleChekiLike,
   useSettlementsOf,
   usePublicProfilesByIds,
+  isSettlementsBinder,
   formatKRW,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
@@ -176,7 +177,7 @@ export function ChekiSheet({
                 onChange={(e) => setDraftBinderId(e.target.value)}
               >
                 <option value="">No binder</option>
-                {(binders ?? []).map((b) => (
+                {(binders ?? []).filter((b) => !isSettlementsBinder(b)).map((b) => (
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
@@ -231,7 +232,7 @@ export function ChekiSheet({
                 </button>
               )}
 
-              {mine && !cheki.sold && !cheki.transferPendingTo && (
+              {mine && !cheki.sold && !cheki.transferPendingTo && !cheki.settlementOf && (
                 <button className="chip purple" style={{ alignSelf: 'flex-start' }} onClick={startEdit}>EDIT</button>
               )}
 
@@ -251,7 +252,7 @@ export function ChekiSheet({
                 </div>
               )}
 
-              {mine && !cheki.sold && !cheki.transferPendingTo && (
+              {mine && !cheki.sold && !cheki.transferPendingTo && !cheki.settlementOf && (
                 <div className="sheet__sell">
                   {feedback ? (
                     <button className="btn muted" style={{ width: '100%' }} disabled>

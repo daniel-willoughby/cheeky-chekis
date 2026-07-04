@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackHeader } from '../components/BackHeader';
 import { CropModal } from '../components/CropModal';
-import { useCafes, useMaids, useMyBinders, addCheki, formatKRW } from '../data/hooks';
+import { useCafes, useMaids, useMyBinders, addCheki, formatKRW, isSettlementsBinder } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { supabase } from '../data/supabase';
 import { CHEKI_TYPES } from '../data/chekiMeta';
@@ -183,7 +183,7 @@ export function UploadPage() {
       <Field label="BINDER">
         <select className="pixel-select" value={binderId} onChange={(e) => setBinderId(e.target.value)}>
           <option value="">No binder</option>
-          {(binders ?? []).map((b) => (
+          {(binders ?? []).filter((b) => !isSettlementsBinder(b)).map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </select>

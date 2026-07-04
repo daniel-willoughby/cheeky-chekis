@@ -41,6 +41,12 @@ begin
   end loop;
   insert into profiles (id, username, name, color)
   values (new.id, candidate, base_username, palette[1 + (abs(hashtext(new.id::text)) % 5)]);
+  -- starter binders: one for regular chekis, one reserved for settlements
+  -- (the app hides 'Cheki Settlements' from binder pickers and fills it
+  -- automatically when settlement photos are attached to a cheki)
+  insert into binders (owner_id, name, design) values
+    (new.id, 'Cheki binder', 'classic'),
+    (new.id, 'Cheki Settlements', 'classic');
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
@@ -220,6 +226,7 @@ returns void as $$
 declare
   v_owner uuid;
   v_pending uuid;
+  v_settlements_binder uuid;
 begin
   select owner_id, transfer_pending_to into v_owner, v_pending from chekis where id = p_cheki_id;
   if v_owner is null then
@@ -234,15 +241,32 @@ begin
         received_from = v_owner, transfer_pending_to = null
     where id = p_cheki_id;
 
+  -- settlements ride along with their parent cheki
+  update chekis set owner_id = auth.uid() where settlement_of = p_cheki_id;
+
   -- award the seller their sold-points now that the transfer is confirmed
   -- (keep in sync with POINTS.sold in src/data/designs.ts)
   update profiles set points = points + 10 where id = v_owner;
 
+  -- drop the old owner's binder links for the cheki and its settlements
   delete from binder_chekis
     using binders
-    where binder_chekis.cheki_id = p_cheki_id
+    where (binder_chekis.cheki_id = p_cheki_id
+           or binder_chekis.cheki_id in (select id from chekis where settlement_of = p_cheki_id))
       and binders.id = binder_chekis.binder_id
       and binders.owner_id = v_owner;
+
+  -- file the settlements into the recipient's settlements binder
+  select id into v_settlements_binder
+    from binders where owner_id = auth.uid() and name = 'Cheki Settlements' limit 1;
+  if v_settlements_binder is null then
+    insert into binders (owner_id, name, design)
+      values (auth.uid(), 'Cheki Settlements', 'classic')
+      returning id into v_settlements_binder;
+  end if;
+  insert into binder_chekis (binder_id, cheki_id)
+    select v_settlements_binder, id from chekis where settlement_of = p_cheki_id
+    on conflict do nothing;
 end;
 $$ language plpgsql security definer set search_path = public;
 

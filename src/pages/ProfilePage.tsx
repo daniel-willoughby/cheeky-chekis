@@ -10,6 +10,7 @@ import {
   updateProfile,
   setProfileAvatar,
   createBinder,
+  isSettlementsBinder,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { MAX_HIGHLIGHTS } from '../types';
@@ -48,6 +49,11 @@ export function ProfilePage() {
 
   async function saveBinder() {
     if (!userId || !binderName.trim()) return;
+    // reserved for the system-managed settlements binder
+    if (isSettlementsBinder({ name: binderName.trim() })) {
+      pushToast('That name is reserved ٩(๑˃́ꇴ˂̀๑)۶');
+      return;
+    }
     await createBinder(userId, binderName.trim(), binderDesign);
     setBinderName('');
     setBinderDesign('classic');
