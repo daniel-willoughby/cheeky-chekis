@@ -208,23 +208,6 @@ create policy "users delete their own cheki photos"
   on storage.objects for delete to authenticated
   using (bucket_id = 'chekis' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- ============ seed reference data (cafes + maids) ============
-insert into cafes (id, name, district, manager, color, emoji, vibe, cheki_price, rules) values
-  ('11111111-1111-1111-1111-111111111101', 'Lumiere Maid Cafe', 'Hongdae, Seoul', 'Manager Yuna', '#ff8fc7', '🎀', 'Bright and bubbly, big on 4-cut photo sets.', 8000, array['One cheki per song request.', 'Homework chekis on Sundays only.', 'Group 4-cut needs 3+ guests.']),
-  ('11111111-1111-1111-1111-111111111102', 'Neko Neko Cha', 'Gangnam, Seoul', 'Manager Riri', '#9b6cff', '🐾', 'Cozy cat theme, known for special pin chekis.', 9000, array['Pins limited to 5 per maid per day.', 'No flash photography.', 'Twin chekis need both maids on shift.']),
-  ('11111111-1111-1111-1111-111111111103', 'Starlight Terrace', 'Busan', 'Manager Bora', '#5b8def', '⭐', 'Seaside cafe, live singing every weekend.', 7500, array['Weekend live sets at 7pm.', 'Cheki trades allowed at the counter.', 'Homework chekis mailed within a week.'])
-on conflict (id) do nothing;
-
-insert into maids (id, cafe_id, name, color, emoji, hair_color, specialty, bio) values
-  ('22222222-2222-2222-2222-222222222201', '11111111-1111-1111-1111-111111111101', 'Yuna', '#ff8fc7', '👑', 'pink', 'Song requests', 'Lumiere ace. Never misses a high note.'),
-  ('22222222-2222-2222-2222-222222222202', '11111111-1111-1111-1111-111111111101', 'Hana', '#9b6cff', '🌸', 'lilac', '4-cut poses', 'Queen of the 4-cut. Endless pose ideas.'),
-  ('22222222-2222-2222-2222-222222222203', '11111111-1111-1111-1111-111111111101', 'Sori', '#5b8def', '🫧', 'blue', 'Latte art', 'Draws your face in the foam.'),
-  ('22222222-2222-2222-2222-222222222204', '11111111-1111-1111-1111-111111111102', 'Riri', '#9b6cff', '🐱', 'purple', 'Special pins', 'Neko Neko legend. Pins sell out fast.'),
-  ('22222222-2222-2222-2222-222222222205', '11111111-1111-1111-1111-111111111102', 'Mochi', '#ff8fc7', '🍡', 'cream', 'Homework chekis', 'Writes the sweetest homework notes.'),
-  ('22222222-2222-2222-2222-222222222206', '11111111-1111-1111-1111-111111111103', 'Bora', '#5b8def', '🌊', 'aqua', 'Live singing', 'Starlight headliner. Seaside voice.'),
-  ('22222222-2222-2222-2222-222222222207', '11111111-1111-1111-1111-111111111103', 'Nari', '#9b6cff', '🌟', 'violet', 'Cheki trades', 'Knows every collector by name.')
-on conflict (id) do nothing;
-
 -- ============ table privileges ============
 -- RLS restricts which rows each user can touch; these grants let the
 -- authenticated role issue the statements in the first place.
