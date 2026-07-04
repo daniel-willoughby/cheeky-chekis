@@ -77,7 +77,6 @@ export function MaidDetailPage() {
                 {draft.graduated ? '🎓 GRADUATED' : 'MARK AS GRADUATED'}
               </button>
               <div className="row" style={{ gap: 8, marginBottom: 8 }}>
-                <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>DONE</button>
                 <button className="btn" style={{ flex: 1 }} onClick={save}>SAVE</button>
               </div>
               {confirmDelete ? (

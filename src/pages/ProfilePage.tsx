@@ -150,7 +150,6 @@ export function ProfilePage() {
                 </div>
               )}
               <div className="row" style={{ gap: 8, marginTop: 8 }}>
-                <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>DONE</button>
                 <button className="btn" style={{ flex: 1 }} onClick={saveEdit}>SAVE</button>
               </div>
             </div>

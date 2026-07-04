@@ -127,7 +127,6 @@ export function CafeDetailPage() {
           <ImageUploadButton folder={`cafes/${cafeId}`} onUploaded={(path) => { if (cafeId) return setCafeImage(cafeId, path); }} />
         </EditField>
         <div className="row" style={{ gap: 10, marginTop: 18 }}>
-          <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>DONE</button>
           <button className="btn" style={{ flex: 1 }} onClick={save}>SAVE</button>
         </div>
 
