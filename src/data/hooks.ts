@@ -64,6 +64,7 @@ function mapMaid(row: Row): Maid {
     hairColor: row.hair_color,
     specialty: row.specialty,
     bio: row.bio,
+    graduated: row.graduated ?? false,
   };
 }
 
@@ -371,12 +372,23 @@ export async function updateMaid(maidId: string, patch: Partial<Maid>): Promise<
   if (patch.bio !== undefined) dbPatch.bio = patch.bio;
   if (patch.hairColor !== undefined) dbPatch.hair_color = patch.hairColor;
   if (patch.emoji !== undefined) dbPatch.emoji = patch.emoji;
+  if (patch.graduated !== undefined) dbPatch.graduated = patch.graduated;
   await writeChecked(supabase.from('maids').update(dbPatch).eq('id', maidId));
   bump();
 }
 
 export async function setMaidImage(maidId: string, path: string): Promise<void> {
   await writeChecked(supabase.from('maids').update({ image_path: path }).eq('id', maidId));
+  bump();
+}
+
+export async function deleteMaid(maidId: string): Promise<void> {
+  await run(supabase.from('maids').delete().eq('id', maidId));
+  bump();
+}
+
+export async function deleteCafe(cafeId: string): Promise<void> {
+  await run(supabase.from('cafes').delete().eq('id', cafeId));
   bump();
 }
 

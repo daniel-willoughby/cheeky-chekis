@@ -71,7 +71,8 @@ create table if not exists maids (
   emoji text not null,
   hair_color text not null,
   specialty text not null,
-  bio text not null
+  bio text not null,
+  graduated boolean not null default false
 );
 
 alter table cafes enable row level security;
@@ -81,9 +82,13 @@ create policy "cafes are readable by any signed-in user"
   on cafes for select to authenticated using (true);
 create policy "any signed-in user can edit cafe info"
   on cafes for update to authenticated using (true);
+create policy "any signed-in user can delete a cafe"
+  on cafes for delete to authenticated using (true);
 
 create policy "maids are readable by any signed-in user"
   on maids for select to authenticated using (true);
+create policy "any signed-in user can delete a maid"
+  on maids for delete to authenticated using (true);
 
 -- ============ friendships ============
 create table if not exists friendships (
@@ -126,7 +131,7 @@ create table if not exists chekis (
   owner_id uuid not null references profiles(id) on delete cascade,
   image_path text,
   maid_ids uuid[] not null default '{}',
-  cafe_id uuid references cafes(id),
+  cafe_id uuid references cafes(id) on delete set null,
   date date,
   type text not null,
   status text not null default 'on-hand',

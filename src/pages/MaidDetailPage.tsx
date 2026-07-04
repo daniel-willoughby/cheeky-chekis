@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useMaid, useCafe, useProfile, useMyChekis, toggleHighlight, updateMaid, setMaidImage } from '../data/hooks';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useMaid, useCafe, useProfile, useMyChekis, toggleHighlight, updateMaid, setMaidImage, deleteMaid } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { MAX_HIGHLIGHTS } from '../types';
 import { MaidCard } from '../components/MaidCard';
@@ -11,6 +11,7 @@ import './common.css';
 
 export function MaidDetailPage() {
   const { maidId } = useParams();
+  const navigate = useNavigate();
   const { userId } = useAuth();
   const maid = useMaid(maidId);
   const cafe = useCafe(maid?.cafeId);
@@ -19,7 +20,9 @@ export function MaidDetailPage() {
   const myChekis = maidId ? (allMyChekis ?? []).filter((c) => c.maidIds.includes(maidId)) : [];
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ name: '', specialty: '', bio: '' });
+  const [draft, setDraft] = useState({ name: '', specialty: '', bio: '', graduated: false });
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   if (!maid) return <div className="screen"><BackHeader title="Maid" /></div>;
   const highlights = profile?.favouriteMaidIds ?? [];
@@ -28,13 +31,29 @@ export function MaidDetailPage() {
 
   function startEdit() {
     if (!maid) return;
-    setDraft({ name: maid.name, specialty: maid.specialty, bio: maid.bio });
+    setDraft({ name: maid.name, specialty: maid.specialty, bio: maid.bio, graduated: maid.graduated });
     setEditing(true);
   }
   async function save() {
     if (!maidId) return;
-    await updateMaid(maidId, { name: draft.name.trim(), specialty: draft.specialty.trim(), bio: draft.bio.trim() });
+    await updateMaid(maidId, {
+      name: draft.name.trim(),
+      specialty: draft.specialty.trim(),
+      bio: draft.bio.trim(),
+      graduated: draft.graduated,
+    });
     setEditing(false);
+  }
+  async function remove() {
+    if (!maidId) return;
+    setDeleting(true);
+    try {
+      await deleteMaid(maidId);
+      navigate(cafe ? `/cafes/${cafe.id}` : '/cafes');
+    } catch {
+      setDeleting(false);
+      setConfirmDelete(false); // error toast already shown
+    }
   }
 
   return (
@@ -52,10 +71,26 @@ export function MaidDetailPage() {
               <div className="row" style={{ marginBottom: 8 }}>
                 <ImageUploadButton folder={`maids/${maidId}`} label="MAID PHOTO" onUploaded={(path) => { if (maidId) return setMaidImage(maidId, path); }} />
               </div>
-              <div className="row" style={{ gap: 8 }}>
+              <button
+                className={`chip ${draft.graduated ? 'gold' : ''}`}
+                style={{ marginBottom: 8 }}
+                onClick={() => setDraft({ ...draft, graduated: !draft.graduated })}
+              >
+                {draft.graduated ? '🎓 GRADUATED' : 'MARK AS GRADUATED'}
+              </button>
+              <div className="row" style={{ gap: 8, marginBottom: 8 }}>
                 <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>DONE</button>
                 <button className="btn" style={{ flex: 1 }} onClick={save}>SAVE</button>
               </div>
+              {confirmDelete ? (
+                <div className="row" style={{ gap: 8 }}>
+                  <span className="body-text" style={{ fontSize: 15, flex: 1 }}>Delete {maid.name} for good?</span>
+                  <button className="btn ghost" disabled={deleting} onClick={() => setConfirmDelete(false)}>NO</button>
+                  <button className="btn pink" disabled={deleting} onClick={remove}>{deleting ? '...' : 'DELETE'}</button>
+                </div>
+              ) : (
+                <button className="chip pink" onClick={() => setConfirmDelete(true)}>DELETE MAID</button>
+              )}
             </>
           ) : (
             <>

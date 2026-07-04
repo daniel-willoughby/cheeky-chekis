@@ -22,14 +22,9 @@ export function CropModal({
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget;
-    // start with a centered box covering ~80% of the photo
-    const c: Crop = {
-      unit: 'px',
-      x: width * 0.1,
-      y: height * 0.1,
-      width: width * 0.8,
-      height: height * 0.8,
-    };
+    // start with the crop covering the entire photo, so "USE PHOTO" without
+    // any adjustment uploads the whole picture
+    const c: Crop = { unit: 'px', x: 0, y: 0, width, height };
     setCrop(c);
     setCompleted({ x: c.x, y: c.y, width: c.width, height: c.height, unit: 'px' } as PixelCrop);
   }

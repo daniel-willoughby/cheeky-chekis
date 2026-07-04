@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useCafe, useMaidsByCafe, updateCafe, setCafeImage, createMaid, formatKRW } from '../data/hooks';
+import { useCafe, useMaidsByCafe, updateCafe, setCafeImage, createMaid, deleteCafe, formatKRW } from '../data/hooks';
 import { CHEKI_TYPES } from '../data/chekiMeta';
 import type { ChekiType } from '../types';
 import { MaidCard } from '../components/MaidCard';
@@ -20,8 +20,22 @@ export function CafeDetailPage() {
   const [addingMaid, setAddingMaid] = useState(false);
   const [maidDraft, setMaidDraft] = useState({ name: '', specialty: '', bio: '' });
   const [savingMaid, setSavingMaid] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   if (!cafe) return <div className="screen"><BackHeader title="Cafe" /></div>;
+
+  async function removeCafe() {
+    if (!cafeId) return;
+    setDeleting(true);
+    try {
+      await deleteCafe(cafeId);
+      navigate('/cafes');
+    } catch {
+      setDeleting(false);
+      setConfirmDelete(false); // error toast already shown
+    }
+  }
 
   async function saveMaid() {
     if (!cafeId || !maidDraft.name.trim()) return;
@@ -117,6 +131,18 @@ export function CafeDetailPage() {
           <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>DONE</button>
           <button className="btn" style={{ flex: 1 }} onClick={save}>SAVE</button>
         </div>
+
+        <EditField label="DANGER ZONE">
+          {confirmDelete ? (
+            <div className="row" style={{ gap: 8 }}>
+              <span className="body-text" style={{ fontSize: 15, flex: 1 }}>Delete {cafe.name} and all its maids?</span>
+              <button className="btn ghost" disabled={deleting} onClick={() => setConfirmDelete(false)}>NO</button>
+              <button className="btn pink" disabled={deleting} onClick={removeCafe}>{deleting ? '...' : 'DELETE'}</button>
+            </div>
+          ) : (
+            <button className="chip pink" onClick={() => setConfirmDelete(true)}>DELETE CAFE</button>
+          )}
+        </EditField>
       </div>
     );
   }

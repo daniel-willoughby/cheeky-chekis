@@ -27,13 +27,13 @@ export function LoginPage() {
         <img src={`${import.meta.env.BASE_URL}icons/logo.png`} alt="" className="login-card__logo" />
         <h1 className="login-card__title">Cheeky Chekis</h1>
         <p className="body-text login-card__blurb">
-          Collect, tag and share your maid cafe chekis.
+          Welcome ૮ ˶ᵔ ᵕ ᵔ˶ ა Share your cheki magic with your cheeky friends!
         </p>
 
         {sent ? (
           <div className="login-card__sent">
             <p className="body-text">
-              Check <b>{email}</b> for a magic link — tap it to sign in.
+              Check <b>{email}</b> for a login link — tap it to sign in.
             </p>
           </div>
         ) : (
@@ -49,7 +49,7 @@ export function LoginPage() {
             />
             {error && <p className="body-text login-card__error">{error}</p>}
             <button className="btn" style={{ width: '100%', marginTop: 14 }} disabled={sending}>
-              {sending ? 'SENDING...' : 'SEND MAGIC LINK'}
+              {sending ? 'SENDING...' : 'SEND LOGIN LINK'}
             </button>
           </form>
         )}

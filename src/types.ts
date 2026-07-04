@@ -45,6 +45,7 @@ export interface Maid {
   hairColor: string;
   specialty: string;      // "the cafe's ace", card flavour
   bio: string;
+  graduated: boolean;     // greyed out, kept for classifying past chekis
 }
 
 export interface Cafe {

@@ -21,6 +21,10 @@
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
+.maid-card--graduated {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
 
 .maid-card__star {
   position: absolute;
