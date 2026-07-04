@@ -2,10 +2,11 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackHeader } from '../components/BackHeader';
 import { CropModal } from '../components/CropModal';
-import { useCafes, useMaids, addCheki, formatKRW } from '../data/hooks';
+import { useCafes, useMaids, useMyBinders, addCheki, formatKRW } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { supabase } from '../data/supabase';
 import { CHEKI_TYPES } from '../data/chekiMeta';
+import { pushToast } from '../data/toast';
 import { MULTI_MAID_TYPES } from '../types';
 import type { ChekiType, ChekiStatus } from '../types';
 import './common.css';
@@ -16,6 +17,7 @@ export function UploadPage() {
   const { userId } = useAuth();
   const cafes = useCafes();
   const maids = useMaids();
+  const binders = useMyBinders();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -23,11 +25,12 @@ export function UploadPage() {
   const [rawSrc, setRawSrc] = useState<string>();     // photo awaiting crop
   const [cafeId, setCafeId] = useState<string>('');
   const [maidIds, setMaidIds] = useState<string[]>([]);
-  const [type, setType] = useState<ChekiType>('normal');
+  const [type, setType] = useState<ChekiType>('pin');
   const [status, setStatus] = useState<ChekiStatus>('on-hand');
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [forSale, setForSale] = useState(false);
   const [price, setPrice] = useState('');
+  const [binderId, setBinderId] = useState('');
   const [saving, setSaving] = useState(false);
 
   const [maidSearch, setMaidSearch] = useState('');
@@ -66,24 +69,34 @@ export function UploadPage() {
     setSaving(true);
     const cafe = cafeId || (maidIds[0] ? maids?.find((m) => m.id === maidIds[0])?.cafeId : undefined);
 
-    let imagePath: string | null = null;
-    if (blob) {
-      const path = `${userId}/${crypto.randomUUID()}.jpg`;
-      const { error } = await supabase.storage.from('chekis').upload(path, blob, { contentType: 'image/jpeg' });
-      if (!error) imagePath = path;
-    }
+    try {
+      let imagePath: string | null = null;
+      if (blob) {
+        const path = `${userId}/${crypto.randomUUID()}.jpg`;
+        const { error } = await supabase.storage.from('chekis').upload(path, blob, { contentType: 'image/jpeg' });
+        if (error) {
+          pushToast(error.message);
+          setSaving(false);
+          return;
+        }
+        imagePath = path;
+      }
 
-    await addCheki(userId, {
-      imagePath,
-      maidIds,
-      cafeId: cafe,
-      date,
-      type,
-      status,
-      forSale,
-      price: forSale && price ? Number(price) : undefined,
-    });
-    navigate('/');
+      await addCheki(userId, {
+        imagePath,
+        maidIds,
+        cafeId: cafe,
+        date,
+        type,
+        status,
+        forSale,
+        price: forSale && price ? Number(price) : undefined,
+        binderId: binderId || undefined,
+      });
+      navigate('/');
+    } catch {
+      setSaving(false); // error toast already shown
+    }
   }
 
   return (
@@ -165,6 +178,15 @@ export function UploadPage() {
 
       <Field label="DATE">
         <input className="pixel-select" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      </Field>
+
+      <Field label="BINDER">
+        <select className="pixel-select" value={binderId} onChange={(e) => setBinderId(e.target.value)}>
+          <option value="">No binder</option>
+          {(binders ?? []).map((b) => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </select>
       </Field>
 
       <Field label="SELL THIS?">

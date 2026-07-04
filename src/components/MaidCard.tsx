@@ -32,6 +32,7 @@ export function MaidCard({
       {!compact && (
         <>
           <div className="maid-card__specialty body-text">{maid.specialty}</div>
+          {maid.bio && <div className="maid-card__desc body-text">{maid.bio}</div>}
           {cafeName && <div className="maid-card__cafe body-text">{cafeName}</div>}
         </>
       )}

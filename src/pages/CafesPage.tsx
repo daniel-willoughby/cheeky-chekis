@@ -31,8 +31,11 @@ export function CafesPage() {
 
   return (
     <div className="screen">
-      <h1 className="screen-title">Maid Cafes</h1>
-      <div style={{ display: 'grid', gap: 14 }}>
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 className="screen-title" style={{ marginBottom: 0 }}>Maid Cafes</h1>
+        <button className="chip purple" onClick={() => navigate('/dictionary')}>📖 DICTIONARY</button>
+      </div>
+      <div style={{ display: 'grid', gap: 14, marginTop: 14 }}>
         {(cafes ?? []).map((cafe) => {
           const count = (maids ?? []).filter((m) => m.cafeId === cafe.id).length;
           return (

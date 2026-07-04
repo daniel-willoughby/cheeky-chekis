@@ -24,9 +24,14 @@ export function imageUrl(path: string | null): string | undefined {
   return supabase.storage.from('images').getPublicUrl(path).data.publicUrl;
 }
 
-// Uploads a blob to the shared 'images' bucket and returns its storage path.
-export async function uploadImage(folder: string, blob: Blob): Promise<string | null> {
+// Uploads a blob to the shared 'images' bucket. Returns the storage path,
+// or an error message the caller can surface.
+export async function uploadImage(
+  folder: string,
+  blob: Blob,
+): Promise<{ path: string | null; error?: string }> {
   const path = `${folder}/${crypto.randomUUID()}.jpg`;
   const { error } = await supabase.storage.from('images').upload(path, blob, { contentType: 'image/jpeg' });
-  return error ? null : path;
+  if (error) return { path: null, error: error.message };
+  return { path };
 }

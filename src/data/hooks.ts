@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { supabase, chekiPhotoUrl, imageUrl } from './supabase';
+import { pushToast } from './toast';
 import { useAuth } from './auth';
 import { useDataVersion } from './store';
 import { CHEKI_FALLBACK } from './chekiArt';
@@ -77,6 +78,7 @@ function mapCafe(row: Row): Cafe {
     imageUrl: imageUrl(row.image_path),
     vibe: row.vibe,
     chekiPrice: row.cheki_price,
+    typePrices: row.type_prices ?? {},
     rules: row.rules ?? [],
   };
 }
@@ -123,8 +125,29 @@ async function run<R extends { data: unknown; error: PostgrestError | null }>(
   p: PromiseLike<R>,
 ): Promise<NonNullable<R['data']>> {
   const { data, error } = await p;
-  if (error) throw new Error(error.message);
+  if (error) {
+    pushToast(error.message);
+    throw new Error(error.message);
+  }
   return data as NonNullable<R['data']>;
+}
+
+// For UPDATEs: a row-level-security block returns success with 0 rows and no
+// error, so a plain update fails silently. Chain .select() and confirm a row
+// came back; otherwise surface a clear message.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function writeChecked(builder: any): Promise<Row[]> {
+  const { data, error } = await builder.select();
+  if (error) {
+    pushToast(error.message);
+    throw new Error(error.message);
+  }
+  if (!data || data.length === 0) {
+    const msg = 'Save was blocked — run the latest SQL migration in Supabase.';
+    pushToast(msg);
+    throw new Error(msg);
+  }
+  return data;
 }
 
 // ---------- generic fetch-and-refetch hook ----------
@@ -174,18 +197,18 @@ export async function updateProfile(userId: string, patch: Partial<Profile>): Pr
   if (patch.ownedDesigns !== undefined) dbPatch.owned_designs = patch.ownedDesigns;
   if (patch.lastLoginAt !== undefined) dbPatch.last_login_at = patch.lastLoginAt;
   if (patch.lastSeenFriendsAt !== undefined) dbPatch.last_seen_friends_at = patch.lastSeenFriendsAt;
-  await run(supabase.from('profiles').update(dbPatch).eq('id', userId));
+  await writeChecked(supabase.from('profiles').update(dbPatch).eq('id', userId));
   bump();
 }
 
 export async function setProfileAvatar(userId: string, path: string): Promise<void> {
-  await run(supabase.from('profiles').update({ avatar_path: path }).eq('id', userId));
+  await writeChecked(supabase.from('profiles').update({ avatar_path: path }).eq('id', userId));
   bump();
 }
 
 export async function awardPoints(userId: string, n: number): Promise<void> {
   const row = await run(supabase.from('profiles').select('points').eq('id', userId).single());
-  await run(supabase.from('profiles').update({ points: row.points + n }).eq('id', userId));
+  await writeChecked(supabase.from('profiles').update({ points: row.points + n }).eq('id', userId));
   bump();
 }
 
@@ -198,7 +221,7 @@ export async function toggleHighlight(userId: string, maidId: string): Promise<v
     : current.length < MAX_HIGHLIGHTS
       ? [...current, maidId]
       : current;
-  await run(supabase.from('profiles').update({ favourite_maid_ids: next }).eq('id', userId));
+  await writeChecked(supabase.from('profiles').update({ favourite_maid_ids: next }).eq('id', userId));
   bump();
 }
 
@@ -215,7 +238,7 @@ export async function claimDailyBonus(userId: string): Promise<boolean> {
     awarded = true;
   }
   if (Object.keys(patch).length) {
-    await run(supabase.from('profiles').update(patch).eq('id', userId));
+    await writeChecked(supabase.from('profiles').update(patch).eq('id', userId));
     bump();
   }
   return awarded;
@@ -227,7 +250,7 @@ export async function buyDesign(userId: string, design: BinderDesign): Promise<b
   if (owned.includes(design)) return false;
   const cost = designPrice(design);
   if (row.points < cost) return false;
-  await run(
+  await writeChecked(
     supabase
       .from('profiles')
       .update({ points: row.points - cost, owned_designs: [...owned, design] })
@@ -270,14 +293,15 @@ export async function updateCafe(cafeId: string, patch: Partial<Cafe>): Promise<
   if (patch.district !== undefined) dbPatch.district = patch.district;
   if (patch.manager !== undefined) dbPatch.manager = patch.manager;
   if (patch.chekiPrice !== undefined) dbPatch.cheki_price = patch.chekiPrice;
+  if (patch.typePrices !== undefined) dbPatch.type_prices = patch.typePrices;
   if (patch.vibe !== undefined) dbPatch.vibe = patch.vibe;
   if (patch.rules !== undefined) dbPatch.rules = patch.rules;
-  await run(supabase.from('cafes').update(dbPatch).eq('id', cafeId));
+  await writeChecked(supabase.from('cafes').update(dbPatch).eq('id', cafeId));
   bump();
 }
 
 export async function setCafeImage(cafeId: string, path: string): Promise<void> {
-  await run(supabase.from('cafes').update({ image_path: path }).eq('id', cafeId));
+  await writeChecked(supabase.from('cafes').update({ image_path: path }).eq('id', cafeId));
   bump();
 }
 
@@ -347,12 +371,12 @@ export async function updateMaid(maidId: string, patch: Partial<Maid>): Promise<
   if (patch.bio !== undefined) dbPatch.bio = patch.bio;
   if (patch.hairColor !== undefined) dbPatch.hair_color = patch.hairColor;
   if (patch.emoji !== undefined) dbPatch.emoji = patch.emoji;
-  await run(supabase.from('maids').update(dbPatch).eq('id', maidId));
+  await writeChecked(supabase.from('maids').update(dbPatch).eq('id', maidId));
   bump();
 }
 
 export async function setMaidImage(maidId: string, path: string): Promise<void> {
-  await run(supabase.from('maids').update({ image_path: path }).eq('id', maidId));
+  await writeChecked(supabase.from('maids').update({ image_path: path }).eq('id', maidId));
   bump();
 }
 
@@ -401,6 +425,7 @@ export async function addCheki(
     forSale: boolean;
     price?: number;
     notes?: string;
+    binderId?: string;
   },
 ): Promise<string> {
   const row = await run(
@@ -422,6 +447,9 @@ export async function addCheki(
       .select('id')
       .single(),
   );
+  if (input.binderId) {
+    await run(supabase.from('binder_chekis').insert({ binder_id: input.binderId, cheki_id: row.id }));
+  }
   await awardPoints(userId, POINTS.upload);
   bump();
   return row.id;
@@ -429,7 +457,7 @@ export async function addCheki(
 
 export async function toggleForSale(cheki: Cheki, price?: number): Promise<void> {
   const nextForSale = !cheki.forSale;
-  await run(
+  await writeChecked(
     supabase
       .from('chekis')
       .update({ for_sale: nextForSale, price: nextForSale ? (price ?? cheki.price ?? null) : cheki.price ?? null })
@@ -441,7 +469,7 @@ export async function toggleForSale(cheki: Cheki, price?: number): Promise<void>
 // Classify a for-sale cheki as sold. Awards points once, pulls it off the market.
 export async function markSold(cheki: Cheki): Promise<void> {
   if (cheki.sold) return;
-  await run(supabase.from('chekis').update({ sold: true, for_sale: false }).eq('id', cheki.id));
+  await writeChecked(supabase.from('chekis').update({ sold: true, for_sale: false }).eq('id', cheki.id));
   await awardPoints(cheki.ownerId, POINTS.sold);
   bump();
 }
@@ -503,7 +531,7 @@ export async function createBinder(userId: string, name: string, design: BinderD
 }
 
 export async function setBinderDesign(binderId: string, design: BinderDesign): Promise<void> {
-  await run(supabase.from('binders').update({ design }).eq('id', binderId));
+  await writeChecked(supabase.from('binders').update({ design }).eq('id', binderId));
   bump();
 }
 
@@ -577,7 +605,7 @@ export async function sendFriendRequest(userId: string, targetId: string): Promi
 }
 
 export async function acceptFriendRequest(friendshipId: string): Promise<void> {
-  await run(supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId));
+  await writeChecked(supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId));
   bump();
 }
 
@@ -626,6 +654,6 @@ export const usePendingFriendActivityCount = (): number => {
 };
 
 export async function markFriendsSeen(userId: string): Promise<void> {
-  await run(supabase.from('profiles').update({ last_seen_friends_at: new Date().toISOString() }).eq('id', userId));
+  await writeChecked(supabase.from('profiles').update({ last_seen_friends_at: new Date().toISOString() }).eq('id', userId));
   bump();
 }

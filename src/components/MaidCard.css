@@ -59,6 +59,11 @@
   color: var(--purple-deep);
   line-height: 1;
 }
+.maid-card__desc {
+  font-size: 15px;
+  line-height: 1.15;
+  margin-top: 2px;
+}
 .maid-card__cafe {
   font-size: 15px;
   opacity: 0.7;

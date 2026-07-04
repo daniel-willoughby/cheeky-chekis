@@ -5,24 +5,27 @@ export interface PixelCrop {
   height: number;
 }
 
-// Render the selected crop region to a canvas and return a JPEG blob.
-export async function getCroppedBlob(src: string, crop: PixelCrop): Promise<Blob> {
-  const image = await loadImage(src);
+// Render the selected region of a displayed <img> to a canvas and return a
+// JPEG blob. The crop is in the image's *displayed* pixels, so we scale up to
+// the natural resolution before drawing.
+export async function getCroppedBlob(image: HTMLImageElement, crop: PixelCrop): Promise<Blob> {
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
   const canvas = document.createElement('canvas');
-  canvas.width = crop.width;
-  canvas.height = crop.height;
+  canvas.width = Math.max(1, Math.floor(crop.width * scaleX));
+  canvas.height = Math.max(1, Math.floor(crop.height * scaleY));
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('no 2d context');
   ctx.drawImage(
     image,
-    crop.x,
-    crop.y,
-    crop.width,
-    crop.height,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
     0,
     0,
-    crop.width,
-    crop.height,
+    canvas.width,
+    canvas.height,
   );
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -30,14 +33,5 @@ export async function getCroppedBlob(src: string, crop: PixelCrop): Promise<Blob
       'image/jpeg',
       0.9,
     );
-  });
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
   });
 }

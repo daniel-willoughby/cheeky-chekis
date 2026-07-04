@@ -14,6 +14,7 @@ import { DictionaryPage } from './pages/DictionaryPage';
 import { ShopPage } from './pages/ShopPage';
 import { LoginPage } from './pages/LoginPage';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { Toasts } from './components/Toasts';
 import { useAuth } from './data/auth';
 import { claimDailyBonus } from './data/hooks';
 
@@ -44,6 +45,7 @@ export default function App() {
       </Routes>
       <TabBar />
       <UpdatePrompt />
+      <Toasts />
     </>
   );
 }

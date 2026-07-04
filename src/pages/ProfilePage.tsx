@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useProfile,
@@ -6,18 +6,21 @@ import {
   useMyBinders,
   useBinderChekiCounts,
   useMaids,
+  useCafes,
   updateProfile,
   setProfileAvatar,
   createBinder,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { MAX_HIGHLIGHTS } from '../types';
-import type { BinderDesign } from '../types';
+import type { BinderDesign, ChekiType } from '../types';
+import { CHEKI_TYPES } from '../data/chekiMeta';
 import { DESIGNS } from '../data/designs';
 import { MaidCard } from '../components/MaidCard';
 import { ChekiGrid } from '../components/ChekiGrid';
 import { BinderCard } from '../components/BinderCard';
 import { ImageUploadButton } from '../components/ImageUploadButton';
+import { pushToast } from '../data/toast';
 import './common.css';
 import './ProfilePage.css';
 
@@ -29,6 +32,10 @@ export function ProfilePage() {
   const binders = useMyBinders();
   const binderCounts = useBinderChekiCounts(userId ?? undefined);
   const maids = useMaids();
+  const cafes = useCafes();
+  const [filterType, setFilterType] = useState<ChekiType | 'all'>('all');
+  const [filterMaid, setFilterMaid] = useState('');
+  const [filterCafe, setFilterCafe] = useState('');
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [bioDraft, setBioDraft] = useState('');
@@ -52,6 +59,20 @@ export function ProfilePage() {
   const onHand = (chekis ?? []).filter((c) => c.status === 'on-hand').length;
   const onWay = (chekis ?? []).filter((c) => c.status === 'on-the-way').length;
 
+  // maids/cafes that actually appear in the collection, for the filter dropdowns
+  const ownMaidIds = new Set((chekis ?? []).flatMap((c) => c.maidIds));
+  const ownCafeIds = new Set((chekis ?? []).map((c) => c.cafeId).filter(Boolean));
+  const filteredChekis = useMemo(
+    () =>
+      (chekis ?? []).filter(
+        (c) =>
+          (filterType === 'all' || c.type === filterType) &&
+          (!filterMaid || c.maidIds.includes(filterMaid)) &&
+          (!filterCafe || c.cafeId === filterCafe),
+      ),
+    [chekis, filterType, filterMaid, filterCafe],
+  );
+
   function startEdit() {
     setNameDraft(profile?.name ?? '');
     setBioDraft(profile?.bio ?? '');
@@ -59,8 +80,13 @@ export function ProfilePage() {
   }
   async function saveEdit() {
     if (!userId) return;
-    await updateProfile(userId, { name: nameDraft.trim() || profile?.name, bio: bioDraft.trim() });
-    setEditing(false);
+    try {
+      await updateProfile(userId, { name: nameDraft.trim() || profile?.name, bio: bioDraft.trim() });
+      pushToast('Profile saved', 'ok');
+      setEditing(false);
+    } catch {
+      // error toast already shown; keep the form open so nothing is lost
+    }
   }
 
   return (
@@ -177,16 +203,39 @@ export function ProfilePage() {
         BINDER SHOP
       </button>
 
-      <div className="section-label">MY CHEKIS ({chekis?.length ?? 0})</div>
+      <div className="section-label">MY CHEKIS ({filteredChekis.length})</div>
+      {chekis && chekis.length > 0 && (
+        <>
+          <div className="scroll-x">
+            {(['all', ...CHEKI_TYPES] as (ChekiType | 'all')[]).map((t) => (
+              <button key={t} className={`chip ${filterType === t ? 'purple' : ''}`} onClick={() => setFilterType(t)}>
+                {t.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <div className="row" style={{ gap: 10, marginTop: 10 }}>
+            <select className="pixel-select" value={filterMaid} onChange={(e) => setFilterMaid(e.target.value)}>
+              <option value="">All maids</option>
+              {(maids ?? []).filter((m) => ownMaidIds.has(m.id)).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+            <select className="pixel-select" value={filterCafe} onChange={(e) => setFilterCafe(e.target.value)}>
+              <option value="">All cafes</option>
+              {(cafes ?? []).filter((c) => ownCafeIds.has(c.id)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        </>
+      )}
       {chekis && chekis.length === 0 && (
         <div className="empty pixel-box">No chekis yet. Tap Upload to add one.</div>
       )}
-      <ChekiGrid chekis={chekis ?? []} />
+      {chekis && chekis.length > 0 && filteredChekis.length === 0 && (
+        <div className="empty pixel-box" style={{ marginTop: 12 }}>No chekis match.</div>
+      )}
+      <div style={{ marginTop: 12 }}>
+        <ChekiGrid chekis={filteredChekis} />
+      </div>
 
-      <button className="btn ghost" style={{ marginTop: 22, width: '100%' }} onClick={() => navigate('/dictionary')}>
-        CHEKI DICTIONARY
-      </button>
-      <button className="btn ghost" style={{ marginTop: 10, width: '100%' }} onClick={signOut}>
+      <button className="btn ghost" style={{ marginTop: 22, width: '100%' }} onClick={signOut}>
         SIGN OUT
       </button>
     </div>

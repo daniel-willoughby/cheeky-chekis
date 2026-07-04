@@ -112,7 +112,8 @@ h1, h2, h3, h4 {
 .chip.pink { background: var(--pink); color: var(--ink); }
 .chip.purple { background: var(--purple); color: var(--paper); }
 .chip.gold { background: var(--gold); color: var(--ink); }
-.chip.good { background: var(--good); color: var(--ink); }
+/* 'good' kept as an alias but now blue — no green in the palette */
+.chip.good { background: var(--blue); color: var(--paper); }
 .chip.muted { background: #b9b0c9; color: var(--paper); }
 
 /* scrollbars kept out of the way */

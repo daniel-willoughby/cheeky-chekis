@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCafe, useMaidsByCafe, updateCafe, setCafeImage, createMaid, formatKRW } from '../data/hooks';
+import { CHEKI_TYPES } from '../data/chekiMeta';
+import type { ChekiType } from '../types';
 import { MaidCard } from '../components/MaidCard';
 import { BackHeader } from '../components/BackHeader';
 import { ImageUploadButton } from '../components/ImageUploadButton';
@@ -14,6 +16,7 @@ export function CafeDetailPage() {
   const maids = useMaidsByCafe(cafeId);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ district: '', manager: '', chekiPrice: '', vibe: '', rules: '' });
+  const [typePrices, setTypePrices] = useState<Partial<Record<ChekiType, string>>>({});
   const [addingMaid, setAddingMaid] = useState(false);
   const [maidDraft, setMaidDraft] = useState({ name: '', specialty: '', bio: '' });
   const [savingMaid, setSavingMaid] = useState(false);
@@ -43,18 +46,32 @@ export function CafeDetailPage() {
       vibe: cafe.vibe,
       rules: cafe.rules.join('\n'),
     });
+    const tp: Partial<Record<ChekiType, string>> = {};
+    for (const t of CHEKI_TYPES) {
+      const v = cafe.typePrices[t];
+      if (v != null) tp[t] = String(v);
+    }
+    setTypePrices(tp);
     setEditing(true);
   }
   async function save() {
     if (!cafeId) return;
-    await updateCafe(cafeId, {
-      district: draft.district.trim(),
-      manager: draft.manager.trim(),
-      chekiPrice: Number(draft.chekiPrice) || 0,
-      vibe: draft.vibe.trim(),
-      rules: draft.rules.split('\n').map((r) => r.trim()).filter(Boolean),
-    });
-    setEditing(false);
+    const tp: Partial<Record<ChekiType, number>> = {};
+    for (const t of CHEKI_TYPES) {
+      const n = Number(typePrices[t]);
+      if (typePrices[t] && n > 0) tp[t] = n;
+    }
+    try {
+      await updateCafe(cafeId, {
+        district: draft.district.trim(),
+        manager: draft.manager.trim(),
+        chekiPrice: Number(draft.chekiPrice) || 0,
+        typePrices: tp,
+        vibe: draft.vibe.trim(),
+        rules: draft.rules.split('\n').map((r) => r.trim()).filter(Boolean),
+      });
+      setEditing(false);
+    } catch { /* error toast shown */ }
   }
 
   if (editing) {
@@ -67,8 +84,25 @@ export function CafeDetailPage() {
         <EditField label="MANAGER">
           <input className="pixel-select" value={draft.manager} onChange={(e) => setDraft({ ...draft, manager: e.target.value })} />
         </EditField>
-        <EditField label="CHEKI PRICE (KRW)">
+        <EditField label="BASE CHEKI PRICE (KRW)">
           <input className="pixel-select" inputMode="numeric" value={draft.chekiPrice} onChange={(e) => setDraft({ ...draft, chekiPrice: e.target.value.replace(/\D/g, '') })} />
+        </EditField>
+        <EditField label="PRICE PER TYPE (KRW, optional)">
+          <div style={{ display: 'grid', gap: 8 }}>
+            {CHEKI_TYPES.map((t) => (
+              <div key={t} className="row" style={{ gap: 10, alignItems: 'center' }}>
+                <span className="body-text" style={{ width: 90, textTransform: 'uppercase', fontSize: 16 }}>{t}</span>
+                <input
+                  className="pixel-select"
+                  style={{ flex: 1 }}
+                  inputMode="numeric"
+                  placeholder="—"
+                  value={typePrices[t] ?? ''}
+                  onChange={(e) => setTypePrices({ ...typePrices, [t]: e.target.value.replace(/\D/g, '') })}
+                />
+              </div>
+            ))}
+          </div>
         </EditField>
         <EditField label="HOW IT RUNS">
           <textarea className="pixel-select" rows={2} value={draft.vibe} onChange={(e) => setDraft({ ...draft, vibe: e.target.value })} />
@@ -102,6 +136,17 @@ export function CafeDetailPage() {
         </div>
         <button className="chip purple" onClick={startEdit}>EDIT</button>
       </div>
+
+      {CHEKI_TYPES.some((t) => cafe.typePrices[t] != null) && (
+        <>
+          <div className="section-label">CHEKI PRICES</div>
+          <div className="row wrap">
+            {CHEKI_TYPES.filter((t) => cafe.typePrices[t] != null).map((t) => (
+              <span key={t} className="chip gold">{t.toUpperCase()} {formatKRW(cafe.typePrices[t])}</span>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="section-label">HOW IT RUNS</div>
       <p className="body-text" style={{ fontSize: 19 }}>{cafe.vibe}</p>

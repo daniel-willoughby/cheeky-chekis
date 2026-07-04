@@ -1,4 +1,4 @@
-export type ChekiType = 'pin' | 'normal' | '4-cut' | 'homework' | 'twin' | 'group' | 'grid';
+export type ChekiType = 'pin' | '4-cut' | 'homework' | 'twin' | 'group' | 'grid';
 export type ChekiStatus = 'on-hand' | 'on-the-way';
 
 // Types that can feature more than one maid.
@@ -57,6 +57,7 @@ export interface Cafe {
   imageUrl?: string;      // uploaded cafe photo
   vibe: string;           // how the cafe runs, short
   chekiPrice: number;     // base cheki price KRW
+  typePrices: Partial<Record<ChekiType, number>>; // price per cheki type
   rules: string[];        // how it runs, bullet points
 }
 

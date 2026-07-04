@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { CropModal } from './CropModal';
 import { uploadImage } from '../data/supabase';
+import { pushToast } from '../data/toast';
 
 // Pick a photo, crop it, upload to the shared images bucket, then hand the
 // resulting storage path back to the caller. Shows its own busy/done state.
@@ -28,11 +29,17 @@ export function ImageUploadButton({
   async function onCropped(blob: Blob) {
     setRawSrc(undefined);
     setBusy(true);
-    const path = await uploadImage(folder, blob);
-    if (path) {
-      await onUploaded(path);
-      setDone(true);
-      setTimeout(() => setDone(false), 2000);
+    try {
+      const { path, error } = await uploadImage(folder, blob);
+      if (!path) {
+        pushToast(error || 'Photo upload failed — run the latest SQL migration in Supabase.');
+      } else {
+        await onUploaded(path);
+        setDone(true);
+        setTimeout(() => setDone(false), 2000);
+      }
+    } catch {
+      // onUploaded already surfaces its own error toast
     }
     setBusy(false);
   }

@@ -1,16 +1,11 @@
-import { useCallback, useState } from 'react';
-import Cropper from 'react-easy-crop';
-import { getCroppedBlob, type PixelCrop } from '../data/cropImage';
+import { useRef, useState } from 'react';
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { getCroppedBlob } from '../data/cropImage';
 import './CropModal.css';
 
-const ASPECTS: { label: string; value: number | undefined }[] = [
-  { label: 'FREE', value: undefined },
-  { label: '3:4', value: 3 / 4 },
-  { label: '1:1', value: 1 },
-  { label: '4:3', value: 4 / 3 },
-];
-
-// Crop a freshly-picked photo before saving. Aspect can be chosen freely.
+// Crop a freshly-picked photo. The selection box is fully draggable and
+// resizable (drag any corner/edge) — no fixed aspect.
 export function CropModal({
   src,
   onCancel,
@@ -20,20 +15,29 @@ export function CropModal({
   onCancel: () => void;
   onDone: (blob: Blob, previewUrl: string) => void;
 }) {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [aspect, setAspect] = useState<number | undefined>(3 / 4);
-  const [areaPixels, setAreaPixels] = useState<PixelCrop | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [completed, setCompleted] = useState<PixelCrop | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const onComplete = useCallback((_: unknown, pixels: PixelCrop) => {
-    setAreaPixels(pixels);
-  }, []);
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { width, height } = e.currentTarget;
+    // start with a centered box covering ~80% of the photo
+    const c: Crop = {
+      unit: 'px',
+      x: width * 0.1,
+      y: height * 0.1,
+      width: width * 0.8,
+      height: height * 0.8,
+    };
+    setCrop(c);
+    setCompleted({ x: c.x, y: c.y, width: c.width, height: c.height, unit: 'px' } as PixelCrop);
+  }
 
   async function confirm() {
-    if (!areaPixels) return;
+    if (!imgRef.current || !completed || completed.width === 0) return;
     setBusy(true);
-    const blob = await getCroppedBlob(src, areaPixels);
+    const blob = await getCroppedBlob(imgRef.current, completed);
     onDone(blob, URL.createObjectURL(blob));
   }
 
@@ -42,41 +46,19 @@ export function CropModal({
       <div className="crop-modal pixel-box">
         <div className="crop-title">CROP YOUR PHOTO</div>
         <div className="crop-stage">
-          <Cropper
-            image={src}
+          <ReactCrop
             crop={crop}
-            zoom={zoom}
-            aspect={aspect}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onComplete}
-          />
+            onChange={(c) => setCrop(c)}
+            onComplete={(c) => setCompleted(c)}
+            keepSelection
+          >
+            <img ref={imgRef} src={src} alt="" onLoad={onImageLoad} className="crop-img" />
+          </ReactCrop>
         </div>
-        <div className="row wrap" style={{ gap: 6, justifyContent: 'center', marginTop: 10 }}>
-          {ASPECTS.map((a) => (
-            <button
-              key={a.label}
-              className={`chip ${aspect === a.value ? 'purple' : ''}`}
-              onClick={() => setAspect(a.value)}
-            >
-              {a.label}
-            </button>
-          ))}
-        </div>
-        <div className="crop-zoom">
-          <span className="crop-zoom__label">ZOOM</span>
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.05}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-          />
-        </div>
+        <p className="body-text crop-hint">Drag the corners to resize the crop window.</p>
         <div className="row" style={{ gap: 10 }}>
           <button className="btn ghost" style={{ flex: 1 }} onClick={onCancel} disabled={busy}>CANCEL</button>
-          <button className="btn" style={{ flex: 1 }} onClick={confirm} disabled={busy}>
+          <button className="btn" style={{ flex: 1 }} onClick={confirm} disabled={busy || !completed}>
             {busy ? '...' : 'USE PHOTO'}
           </button>
         </div>
