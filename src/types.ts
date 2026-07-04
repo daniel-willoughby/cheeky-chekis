@@ -2,7 +2,7 @@ export type ChekiType = 'pin' | 'normal' | '4-cut' | 'homework' | 'twin' | 'grou
 export type ChekiStatus = 'on-hand' | 'on-the-way';
 
 // Types that can feature more than one maid.
-export const MULTI_MAID_TYPES: ChekiType[] = ['twin', 'group'];
+export const MULTI_MAID_TYPES: ChekiType[] = ['twin', 'group', 'homework', '4-cut'];
 
 export interface Cheki {
   id: string;
@@ -41,6 +41,7 @@ export interface Maid {
   cafeId: string;
   color: string;          // card accent
   emoji: string;          // stand-in pixel portrait
+  imageUrl?: string;      // uploaded portrait photo
   hairColor: string;
   specialty: string;      // "the cafe's ace", card flavour
   bio: string;
@@ -53,6 +54,7 @@ export interface Cafe {
   manager: string;
   color: string;
   emoji: string;
+  imageUrl?: string;      // uploaded cafe photo
   vibe: string;           // how the cafe runs, short
   chekiPrice: number;     // base cheki price KRW
   rules: string[];        // how it runs, bullet points
@@ -66,6 +68,7 @@ export interface PublicProfile {
   name: string;
   emoji: string;
   color: string;
+  avatarUrl?: string;
   bio: string;
 }
 
@@ -84,6 +87,7 @@ export interface Profile {
   username: string;
   name: string;
   emoji: string;
+  avatarUrl?: string;
   bio: string;
   favouriteMaidIds: string[]; // up to 3 highlighted maids
   points: number;             // Cheki Points balance

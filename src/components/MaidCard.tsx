@@ -22,7 +22,11 @@ export function MaidCard({
     >
       {highlighted && <span className="maid-card__star">★</span>}
       <div className="maid-card__portrait">
-        <span className="maid-card__emoji">{maid.emoji}</span>
+        {maid.imageUrl ? (
+          <img src={maid.imageUrl} alt="" className="maid-card__portrait-img" />
+        ) : (
+          <span className="maid-card__emoji">{maid.emoji}</span>
+        )}
       </div>
       <div className="maid-card__name">{maid.name}</div>
       {!compact && (

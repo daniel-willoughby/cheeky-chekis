@@ -21,7 +21,18 @@ export function ChekiSheet({
   const navigate = useNavigate();
   const { userId } = useAuth();
   const [price, setPrice] = useState(String(cheki.price ?? ''));
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const mine = cheki.ownerId === userId;
+
+  // Run a mutation, show a grey confirmation, then close.
+  async function withFeedback(label: string, fn: () => Promise<void>, close = true) {
+    setBusy(true);
+    await fn();
+    setFeedback(label);
+    setBusy(false);
+    if (close) setTimeout(onClose, 700);
+  }
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -33,7 +44,7 @@ export function ChekiSheet({
         <div className="sheet__body">
           <div className="row wrap" style={{ gap: 6 }}>
             <span className="chip purple">{cheki.type.toUpperCase()}</span>
-            <span className={`chip ${cheki.status === 'on-hand' ? 'good' : 'blue'}`}>
+            <span className={`chip ${cheki.status === 'on-hand' ? 'purple' : 'blue'}`}>
               {cheki.status === 'on-hand' ? 'ON HAND' : 'ON THE WAY'}
             </span>
             {cheki.forSale && <span className="chip pink">{formatKRW(cheki.price)}</span>}
@@ -54,12 +65,16 @@ export function ChekiSheet({
 
           {mine && !cheki.sold && (
             <div className="sheet__sell">
-              {cheki.forSale ? (
+              {feedback ? (
+                <button className="btn muted" style={{ width: '100%' }} disabled>
+                  {feedback} ✓
+                </button>
+              ) : cheki.forSale ? (
                 <div className="row" style={{ gap: 8 }}>
-                  <button className="btn ghost" style={{ flex: 1 }} onClick={() => toggleForSale(cheki)}>
+                  <button className="btn ghost" style={{ flex: 1 }} disabled={busy} onClick={() => withFeedback('UNLISTED', () => toggleForSale(cheki))}>
                     UNLIST
                   </button>
-                  <button className="btn pink" style={{ flex: 1 }} onClick={() => { markSold(cheki); onClose(); }}>
+                  <button className="btn pink" style={{ flex: 1 }} disabled={busy} onClick={() => withFeedback('SOLD', () => markSold(cheki))}>
                     SOLD +{POINTS.sold}
                   </button>
                 </div>
@@ -73,7 +88,7 @@ export function ChekiSheet({
                     value={price}
                     onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))}
                   />
-                  <button className="btn" onClick={() => toggleForSale(cheki, price ? Number(price) : undefined)}>
+                  <button className="btn" disabled={busy} onClick={() => withFeedback('LISTED', () => toggleForSale(cheki, price ? Number(price) : undefined))}>
                     SELL
                   </button>
                 </div>

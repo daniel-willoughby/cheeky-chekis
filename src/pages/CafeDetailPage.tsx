@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useCafe, useMaidsByCafe, updateCafe, formatKRW } from '../data/hooks';
+import { useCafe, useMaidsByCafe, updateCafe, setCafeImage, createMaid, formatKRW } from '../data/hooks';
 import { MaidCard } from '../components/MaidCard';
 import { BackHeader } from '../components/BackHeader';
+import { ImageUploadButton } from '../components/ImageUploadButton';
 import './common.css';
 import './CafeDetailPage.css';
 
@@ -13,8 +14,25 @@ export function CafeDetailPage() {
   const maids = useMaidsByCafe(cafeId);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ district: '', manager: '', chekiPrice: '', vibe: '', rules: '' });
+  const [addingMaid, setAddingMaid] = useState(false);
+  const [maidDraft, setMaidDraft] = useState({ name: '', specialty: '', bio: '' });
+  const [savingMaid, setSavingMaid] = useState(false);
 
   if (!cafe) return <div className="screen"><BackHeader title="Cafe" /></div>;
+
+  async function saveMaid() {
+    if (!cafeId || !maidDraft.name.trim()) return;
+    setSavingMaid(true);
+    await createMaid({
+      cafeId,
+      name: maidDraft.name.trim(),
+      specialty: maidDraft.specialty.trim(),
+      bio: maidDraft.bio.trim(),
+    });
+    setSavingMaid(false);
+    setAddingMaid(false);
+    setMaidDraft({ name: '', specialty: '', bio: '' });
+  }
 
   function startEdit() {
     if (!cafe) return;
@@ -58,8 +76,11 @@ export function CafeDetailPage() {
         <EditField label="RULES (one per line)">
           <textarea className="pixel-select" rows={4} value={draft.rules} onChange={(e) => setDraft({ ...draft, rules: e.target.value })} />
         </EditField>
+        <EditField label="CAFE PHOTO">
+          <ImageUploadButton folder={`cafes/${cafeId}`} onUploaded={(path) => { if (cafeId) return setCafeImage(cafeId, path); }} />
+        </EditField>
         <div className="row" style={{ gap: 10, marginTop: 18 }}>
-          <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>CANCEL</button>
+          <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>DONE</button>
           <button className="btn" style={{ flex: 1 }} onClick={save}>SAVE</button>
         </div>
       </div>
@@ -71,7 +92,9 @@ export function CafeDetailPage() {
       <BackHeader title={cafe.name} />
 
       <div className="cafe-hero pixel-box" style={{ ['--accent' as string]: cafe.color }}>
-        <div className="cafe-hero__emoji">{cafe.emoji}</div>
+        <div className="cafe-hero__emoji">
+          {cafe.imageUrl ? <img src={cafe.imageUrl} alt="" className="cafe-hero__img" /> : cafe.emoji}
+        </div>
         <div style={{ flex: 1 }}>
           <div className="body-text cafe-detail__line"><b>Area:</b> {cafe.district}</div>
           <div className="body-text cafe-detail__line"><b>Manager:</b> {cafe.manager}</div>
@@ -94,6 +117,26 @@ export function CafeDetailPage() {
           <MaidCard key={m.id} maid={m} onClick={() => navigate(`/maids/${m.id}`)} />
         ))}
       </div>
+
+      {addingMaid ? (
+        <div className="pixel-box" style={{ padding: 14, marginTop: 14 }}>
+          <div className="section-label" style={{ marginTop: 0 }}>NEW MAID</div>
+          <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} placeholder="Name" value={maidDraft.name} onChange={(e) => setMaidDraft({ ...maidDraft, name: e.target.value })} autoFocus />
+          <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} placeholder="Specialty (e.g. Song requests)" value={maidDraft.specialty} onChange={(e) => setMaidDraft({ ...maidDraft, specialty: e.target.value })} />
+          <textarea className="pixel-select" style={{ width: '100%' }} rows={2} placeholder="Short bio" value={maidDraft.bio} onChange={(e) => setMaidDraft({ ...maidDraft, bio: e.target.value })} />
+          <div className="row" style={{ gap: 8, marginTop: 12 }}>
+            <button className="btn ghost" style={{ flex: 1 }} onClick={() => setAddingMaid(false)}>CANCEL</button>
+            <button className="btn" style={{ flex: 1 }} disabled={savingMaid || !maidDraft.name.trim()} onClick={saveMaid}>
+              {savingMaid ? 'SAVING...' : 'ADD MAID'}
+            </button>
+          </div>
+          <p className="body-text" style={{ fontSize: 15, opacity: 0.7, marginTop: 8 }}>Add a photo from the maid's page after creating.</p>
+        </div>
+      ) : (
+        <button className="btn" style={{ width: '100%', marginTop: 14 }} onClick={() => setAddingMaid(true)}>
+          + ADD MAID
+        </button>
+      )}
     </div>
   );
 }

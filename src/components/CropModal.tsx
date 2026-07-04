@@ -3,7 +3,14 @@ import Cropper from 'react-easy-crop';
 import { getCroppedBlob, type PixelCrop } from '../data/cropImage';
 import './CropModal.css';
 
-// Crop a freshly-picked photo to the 3:4 cheki frame before saving.
+const ASPECTS: { label: string; value: number | undefined }[] = [
+  { label: 'FREE', value: undefined },
+  { label: '3:4', value: 3 / 4 },
+  { label: '1:1', value: 1 },
+  { label: '4:3', value: 4 / 3 },
+];
+
+// Crop a freshly-picked photo before saving. Aspect can be chosen freely.
 export function CropModal({
   src,
   onCancel,
@@ -15,6 +22,7 @@ export function CropModal({
 }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [aspect, setAspect] = useState<number | undefined>(3 / 4);
   const [areaPixels, setAreaPixels] = useState<PixelCrop | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -32,17 +40,28 @@ export function CropModal({
   return (
     <div className="crop-backdrop">
       <div className="crop-modal pixel-box">
-        <div className="crop-title">CROP YOUR CHEKI</div>
+        <div className="crop-title">CROP YOUR PHOTO</div>
         <div className="crop-stage">
           <Cropper
             image={src}
             crop={crop}
             zoom={zoom}
-            aspect={3 / 4}
+            aspect={aspect}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onComplete}
           />
+        </div>
+        <div className="row wrap" style={{ gap: 6, justifyContent: 'center', marginTop: 10 }}>
+          {ASPECTS.map((a) => (
+            <button
+              key={a.label}
+              className={`chip ${aspect === a.value ? 'purple' : ''}`}
+              onClick={() => setAspect(a.value)}
+            >
+              {a.label}
+            </button>
+          ))}
         </div>
         <div className="crop-zoom">
           <span className="crop-zoom__label">ZOOM</span>

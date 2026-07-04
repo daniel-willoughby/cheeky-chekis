@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PostgrestError } from '@supabase/supabase-js';
-import { supabase, chekiPhotoUrl } from './supabase';
+import { supabase, chekiPhotoUrl, imageUrl } from './supabase';
 import { useAuth } from './auth';
 import { useDataVersion } from './store';
 import { CHEKI_FALLBACK } from './chekiArt';
@@ -59,6 +59,7 @@ function mapMaid(row: Row): Maid {
     cafeId: row.cafe_id,
     color: row.color,
     emoji: row.emoji,
+    imageUrl: imageUrl(row.image_path),
     hairColor: row.hair_color,
     specialty: row.specialty,
     bio: row.bio,
@@ -73,6 +74,7 @@ function mapCafe(row: Row): Cafe {
     manager: row.manager,
     color: row.color,
     emoji: row.emoji,
+    imageUrl: imageUrl(row.image_path),
     vibe: row.vibe,
     chekiPrice: row.cheki_price,
     rules: row.rules ?? [],
@@ -85,6 +87,7 @@ function mapProfile(row: Row): Profile {
     username: row.username,
     name: row.name,
     emoji: row.emoji,
+    avatarUrl: imageUrl(row.avatar_path),
     bio: row.bio,
     favouriteMaidIds: row.favourite_maid_ids ?? [],
     points: row.points,
@@ -101,6 +104,7 @@ function mapPublicProfile(row: Row): PublicProfile {
     name: row.name,
     emoji: row.emoji,
     color: row.color,
+    avatarUrl: imageUrl(row.avatar_path),
     bio: row.bio,
   };
 }
@@ -171,6 +175,11 @@ export async function updateProfile(userId: string, patch: Partial<Profile>): Pr
   if (patch.lastLoginAt !== undefined) dbPatch.last_login_at = patch.lastLoginAt;
   if (patch.lastSeenFriendsAt !== undefined) dbPatch.last_seen_friends_at = patch.lastSeenFriendsAt;
   await run(supabase.from('profiles').update(dbPatch).eq('id', userId));
+  bump();
+}
+
+export async function setProfileAvatar(userId: string, path: string): Promise<void> {
+  await run(supabase.from('profiles').update({ avatar_path: path }).eq('id', userId));
   bump();
 }
 
@@ -264,6 +273,86 @@ export async function updateCafe(cafeId: string, patch: Partial<Cafe>): Promise<
   if (patch.vibe !== undefined) dbPatch.vibe = patch.vibe;
   if (patch.rules !== undefined) dbPatch.rules = patch.rules;
   await run(supabase.from('cafes').update(dbPatch).eq('id', cafeId));
+  bump();
+}
+
+export async function setCafeImage(cafeId: string, path: string): Promise<void> {
+  await run(supabase.from('cafes').update({ image_path: path }).eq('id', cafeId));
+  bump();
+}
+
+const CAFE_PALETTE = ['#ff8fc7', '#9b6cff', '#5b8def', '#ffd35b'];
+
+export async function createCafe(input: {
+  name: string;
+  district: string;
+  manager: string;
+  vibe: string;
+  chekiPrice: number;
+  emoji?: string;
+}): Promise<string> {
+  const color = CAFE_PALETTE[Math.floor(Math.random() * CAFE_PALETTE.length)];
+  const row = await run(
+    supabase
+      .from('cafes')
+      .insert({
+        name: input.name,
+        district: input.district,
+        manager: input.manager,
+        vibe: input.vibe,
+        cheki_price: input.chekiPrice,
+        emoji: input.emoji || '🎀',
+        color,
+        rules: [],
+      })
+      .select('id')
+      .single(),
+  );
+  bump();
+  return row.id;
+}
+
+export async function createMaid(input: {
+  cafeId: string;
+  name: string;
+  specialty: string;
+  bio: string;
+  hairColor?: string;
+  emoji?: string;
+}): Promise<string> {
+  const color = CAFE_PALETTE[Math.floor(Math.random() * CAFE_PALETTE.length)];
+  const row = await run(
+    supabase
+      .from('maids')
+      .insert({
+        cafe_id: input.cafeId,
+        name: input.name,
+        specialty: input.specialty,
+        bio: input.bio,
+        hair_color: input.hairColor || 'pink',
+        emoji: input.emoji || '🌸',
+        color,
+      })
+      .select('id')
+      .single(),
+  );
+  bump();
+  return row.id;
+}
+
+export async function updateMaid(maidId: string, patch: Partial<Maid>): Promise<void> {
+  const dbPatch: Row = {};
+  if (patch.name !== undefined) dbPatch.name = patch.name;
+  if (patch.specialty !== undefined) dbPatch.specialty = patch.specialty;
+  if (patch.bio !== undefined) dbPatch.bio = patch.bio;
+  if (patch.hairColor !== undefined) dbPatch.hair_color = patch.hairColor;
+  if (patch.emoji !== undefined) dbPatch.emoji = patch.emoji;
+  await run(supabase.from('maids').update(dbPatch).eq('id', maidId));
+  bump();
+}
+
+export async function setMaidImage(maidId: string, path: string): Promise<void> {
+  await run(supabase.from('maids').update({ image_path: path }).eq('id', maidId));
   bump();
 }
 

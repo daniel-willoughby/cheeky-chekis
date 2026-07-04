@@ -17,3 +17,16 @@ export function chekiPhotoUrl(path: string | null): string | undefined {
   if (!path) return undefined;
   return supabase.storage.from('chekis').getPublicUrl(path).data.publicUrl;
 }
+
+// Public URL for an asset in the shared 'images' bucket (avatars, cafe/maid photos).
+export function imageUrl(path: string | null): string | undefined {
+  if (!path) return undefined;
+  return supabase.storage.from('images').getPublicUrl(path).data.publicUrl;
+}
+
+// Uploads a blob to the shared 'images' bucket and returns its storage path.
+export async function uploadImage(folder: string, blob: Blob): Promise<string | null> {
+  const path = `${folder}/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage.from('images').upload(path, blob, { contentType: 'image/jpeg' });
+  return error ? null : path;
+}

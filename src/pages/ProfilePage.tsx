@@ -7,12 +7,17 @@ import {
   useBinderChekiCounts,
   useMaids,
   updateProfile,
+  setProfileAvatar,
+  createBinder,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { MAX_HIGHLIGHTS } from '../types';
+import type { BinderDesign } from '../types';
+import { DESIGNS } from '../data/designs';
 import { MaidCard } from '../components/MaidCard';
 import { ChekiGrid } from '../components/ChekiGrid';
 import { BinderCard } from '../components/BinderCard';
+import { ImageUploadButton } from '../components/ImageUploadButton';
 import './common.css';
 import './ProfilePage.css';
 
@@ -27,6 +32,18 @@ export function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [bioDraft, setBioDraft] = useState('');
+  const [newBinder, setNewBinder] = useState(false);
+  const [binderName, setBinderName] = useState('');
+  const [binderDesign, setBinderDesign] = useState<BinderDesign>('classic');
+  const ownedDesigns = DESIGNS.filter((d) => (profile?.ownedDesigns ?? []).includes(d.id));
+
+  async function saveBinder() {
+    if (!userId || !binderName.trim()) return;
+    await createBinder(userId, binderName.trim(), binderDesign);
+    setBinderName('');
+    setBinderDesign('classic');
+    setNewBinder(false);
+  }
 
   const maidMap = new Map((maids ?? []).map((m) => [m.id, m]));
   const highlights = (profile?.favouriteMaidIds ?? [])
@@ -49,7 +66,13 @@ export function ProfilePage() {
   return (
     <div className="screen">
       <div className="profile-hero pixel-box">
-        <div className="profile-hero__avatar">{profile?.emoji ?? '🎮'}</div>
+        <div className="profile-hero__avatar">
+          {profile?.avatarUrl ? (
+            <img src={profile.avatarUrl} alt="" className="profile-hero__avatar-img" />
+          ) : (
+            profile?.emoji ?? '🎮'
+          )}
+        </div>
         <div className="profile-hero__info">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <h1 className="profile-hero__name">{profile?.name ?? 'You'}</h1>
@@ -73,8 +96,17 @@ export function ProfilePage() {
                 onChange={(e) => setBioDraft(e.target.value)}
                 placeholder="Your bio"
               />
+              {userId && (
+                <div className="row" style={{ marginTop: 8 }}>
+                  <ImageUploadButton
+                    folder={`avatars/${userId}`}
+                    label="CHANGE PHOTO"
+                    onUploaded={(path) => setProfileAvatar(userId, path)}
+                  />
+                </div>
+              )}
               <div className="row" style={{ gap: 8, marginTop: 8 }}>
-                <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>CANCEL</button>
+                <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditing(false)}>DONE</button>
                 <button className="btn" style={{ flex: 1 }} onClick={saveEdit}>SAVE</button>
               </div>
             </div>
@@ -86,7 +118,7 @@ export function ProfilePage() {
           )}
           <div className="row wrap" style={{ marginTop: 6 }}>
             <button className="chip gold" onClick={() => navigate('/shop')}>★ {profile?.points ?? 0} PTS</button>
-            <span className="chip good">{onHand} ON HAND</span>
+            <span className="chip purple">{onHand} ON HAND</span>
             {onWay > 0 && <span className="chip blue">{onWay} ON THE WAY</span>}
           </div>
         </div>
@@ -109,7 +141,39 @@ export function ProfilePage() {
           <BinderCard key={b.id} binder={b} count={binderCounts?.get(b.id)} onClick={() => navigate(`/binder/${b.id}`)} />
         ))}
       </div>
-      <button className="btn pink" style={{ marginTop: 12, width: '100%' }} onClick={() => navigate('/shop')}>
+
+      {newBinder ? (
+        <div className="pixel-box" style={{ padding: 12, marginTop: 12 }}>
+          <input
+            className="pixel-select"
+            style={{ width: '100%' }}
+            maxLength={30}
+            placeholder="Binder name"
+            value={binderName}
+            onChange={(e) => setBinderName(e.target.value)}
+            autoFocus
+          />
+          <div className="row wrap" style={{ gap: 6, marginTop: 10 }}>
+            {ownedDesigns.map((d) => (
+              <button
+                key={d.id}
+                className={`binder-designs__swatch binder--${d.id}${binderDesign === d.id ? ' is-active' : ''}`}
+                title={d.name}
+                onClick={() => setBinderDesign(d.id)}
+              />
+            ))}
+          </div>
+          <div className="row" style={{ gap: 8, marginTop: 12 }}>
+            <button className="btn ghost" style={{ flex: 1 }} onClick={() => setNewBinder(false)}>CANCEL</button>
+            <button className="btn" style={{ flex: 1 }} disabled={!binderName.trim()} onClick={saveBinder}>CREATE</button>
+          </div>
+        </div>
+      ) : (
+        <button className="btn" style={{ marginTop: 12, width: '100%' }} onClick={() => setNewBinder(true)}>
+          + NEW BINDER
+        </button>
+      )}
+      <button className="btn pink" style={{ marginTop: 10, width: '100%' }} onClick={() => navigate('/shop')}>
         BINDER SHOP
       </button>
 

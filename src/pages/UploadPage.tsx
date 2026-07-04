@@ -30,10 +30,15 @@ export function UploadPage() {
   const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [maidSearch, setMaidSearch] = useState('');
   const multiMaid = MULTI_MAID_TYPES.includes(type);
   const cafeMaids = useMemo(
     () => (maids ?? []).filter((m) => !cafeId || m.cafeId === cafeId),
     [maids, cafeId],
+  );
+  const shownMaids = useMemo(
+    () => cafeMaids.filter((m) => m.name.toLowerCase().includes(maidSearch.trim().toLowerCase())),
+    [cafeMaids, maidSearch],
   );
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -109,7 +114,7 @@ export function UploadPage() {
 
       <Field label="STATUS">
         <div className="row">
-          <button className={`chip ${status === 'on-hand' ? 'good' : ''}`} onClick={() => setStatus('on-hand')}>
+          <button className={`chip ${status === 'on-hand' ? 'purple' : ''}`} onClick={() => setStatus('on-hand')}>
             ON HAND
           </button>
           <button className={`chip ${status === 'on-the-way' ? 'blue' : ''}`} onClick={() => setStatus('on-the-way')}>
@@ -128,18 +133,34 @@ export function UploadPage() {
       </Field>
 
       <Field label={multiMaid ? 'MAIDS (tap to add more)' : 'MAID'}>
-        <div className="row wrap">
-          {cafeMaids.map((m) => (
-            <button
-              key={m.id}
-              className={`chip ${maidIds.includes(m.id) ? 'pink' : ''}`}
-              onClick={() => toggleMaid(m.id)}
-            >
-              {maidIds.includes(m.id) ? '✓ ' : ''}{m.name}
-            </button>
-          ))}
-          {cafeMaids.length === 0 && <span className="body-text" style={{ fontSize: 17 }}>Choose a cafe first.</span>}
-        </div>
+        {!cafeId ? (
+          <span className="body-text" style={{ fontSize: 17 }}>Choose a cafe first.</span>
+        ) : (
+          <>
+            {cafeMaids.length > 6 && (
+              <input
+                className="pixel-select"
+                style={{ width: '100%', marginBottom: 8 }}
+                placeholder="Search maids"
+                value={maidSearch}
+                onChange={(e) => setMaidSearch(e.target.value)}
+              />
+            )}
+            <div className="row wrap">
+              {shownMaids.map((m) => (
+                <button
+                  key={m.id}
+                  className={`chip chip-pop ${maidIds.includes(m.id) ? 'pink' : ''}`}
+                  onClick={() => toggleMaid(m.id)}
+                >
+                  {maidIds.includes(m.id) ? '✓ ' : ''}{m.name}
+                </button>
+              ))}
+              {cafeMaids.length === 0 && <span className="body-text" style={{ fontSize: 17 }}>No maids yet. Add one on the cafe page.</span>}
+              {cafeMaids.length > 0 && shownMaids.length === 0 && <span className="body-text" style={{ fontSize: 17 }}>No maids match.</span>}
+            </div>
+          </>
+        )}
       </Field>
 
       <Field label="DATE">

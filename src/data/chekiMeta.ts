@@ -1,12 +1,12 @@
 import type { Maid, ChekiType } from '../types';
 
-// Chip colour per cheki type. Keeps the palette to pink/purple/blue (+ gold/mint accents).
+// Chip colour per cheki type. Palette limited to pink/purple/blue/gold (no green).
 export const TYPE_CLASS: Record<ChekiType, string> = {
   pin: 'gold',
   normal: 'blue',
   '4-cut': 'purple',
   homework: 'pink',
-  twin: 'good',
+  twin: 'purple',
   group: 'purple',
   grid: 'blue',
 };

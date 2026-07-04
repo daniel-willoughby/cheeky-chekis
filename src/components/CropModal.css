@@ -7,11 +7,18 @@
   justify-content: center;
   z-index: 200;
   padding: 16px;
+  animation: crop-fade 0.16s ease-out;
 }
+@keyframes crop-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes crop-pop { 0% { opacity: 0; transform: scale(0.92); } 70% { transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
 .crop-modal {
   width: 100%;
   max-width: 420px;
   padding: 14px;
+  animation: crop-pop 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .crop-backdrop, .crop-modal { animation-duration: 0.001ms; }
 }
 .crop-title {
   font-family: var(--font-pixel);

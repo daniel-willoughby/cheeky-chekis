@@ -35,7 +35,7 @@ export function ShopPage() {
               <div className="shop-item__name">{d.name}</div>
               <div className="body-text shop-item__blurb">{d.blurb}</div>
               {isOwned ? (
-                <span className="chip good" style={{ width: '100%', textAlign: 'center' }}>OWNED ✓</span>
+                <span className="chip blue" style={{ width: '100%', textAlign: 'center' }}>OWNED ✓</span>
               ) : (
                 <button
                   className={`btn ${canBuy ? '' : 'ghost'}`}

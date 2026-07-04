@@ -7,7 +7,10 @@
   justify-content: center;
   z-index: 100;
   padding: 16px;
+  animation: sheet-fade 0.18s ease-out;
 }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-rise { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .sheet {
   width: 100%;
   max-width: 460px;
@@ -15,6 +18,10 @@
   overflow: auto;
   position: relative;
   margin-bottom: 8px;
+  animation: sheet-rise 0.22s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-backdrop, .sheet { animation-duration: 0.001ms; }
 }
 .sheet__close {
   position: absolute;
