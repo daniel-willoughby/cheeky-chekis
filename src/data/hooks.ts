@@ -494,6 +494,11 @@ export async function setChekiBinder(chekiId: string, binderId: string | null): 
   bump();
 }
 
+export async function deleteCheki(chekiId: string): Promise<void> {
+  await run(supabase.from('chekis').delete().eq('id', chekiId));
+  bump();
+}
+
 export async function toggleForSale(cheki: Cheki, price?: number): Promise<void> {
   const nextForSale = !cheki.forSale;
   await writeChecked(

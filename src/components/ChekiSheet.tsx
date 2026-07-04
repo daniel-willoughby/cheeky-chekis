@@ -10,6 +10,7 @@ import {
   markSoldToFriend,
   updateCheki,
   setChekiBinder,
+  deleteCheki,
   useChekiBinderId,
   useMaidsByCafe,
   useMyBinders,
@@ -40,6 +41,8 @@ export function ChekiSheet({
   const [askFriend, setAskFriend] = useState(false);
   const [friendId, setFriendId] = useState('');
   const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const mine = cheki.ownerId === userId;
 
   const cafeMaids = useMaidsByCafe(cheki.cafeId);
@@ -91,6 +94,17 @@ export function ChekiSheet({
       // error toast already shown
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function remove() {
+    setDeleting(true);
+    try {
+      await deleteCheki(cheki.id);
+      onClose();
+    } catch {
+      setDeleting(false);
+      setConfirmDelete(false); // error toast already shown
     }
   }
 
@@ -247,6 +261,20 @@ export function ChekiSheet({
                 </div>
               )}
             </>
+          )}
+
+          {mine && !editing && (
+            <div style={{ marginTop: 14 }}>
+              {confirmDelete ? (
+                <div className="row" style={{ gap: 8 }}>
+                  <span className="body-text" style={{ fontSize: 15, flex: 1 }}>Delete this cheki for good?</span>
+                  <button className="btn ghost" disabled={deleting} onClick={() => setConfirmDelete(false)}>NO</button>
+                  <button className="btn pink" disabled={deleting} onClick={remove}>{deleting ? '...' : 'DELETE'}</button>
+                </div>
+              ) : (
+                <button className="chip pink" onClick={() => setConfirmDelete(true)}>DELETE CHEKI</button>
+              )}
+            </div>
           )}
         </div>
       </div>
