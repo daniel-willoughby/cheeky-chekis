@@ -40,7 +40,7 @@ export function SettingsPage() {
         <p className="body-text" style={{ margin: 0, lineHeight: 1.3 }}>
           All the material used from maids and cafes are available in their public Instagram profiles.
           All the icons and binder designs are by Bel. The app development was assisted by Claude Code.
-          All the assets and contents were designed by Bel.
+          All assets were created by Bel (and Dan)
         </p>
       </div>
     </div>
