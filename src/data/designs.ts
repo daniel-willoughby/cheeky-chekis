@@ -18,18 +18,18 @@ export interface DesignInfo {
 
 export const DESIGNS: DesignInfo[] = [
   { id: 'classic', name: 'Classic', price: 0, blurb: 'The default album.' },
-  { id: 'pastel-pink', name: 'Pastel Pink', price: 25, blurb: 'Soft solid pink.' },
-  { id: 'pastel-blue', name: 'Pastel Blue', price: 25, blurb: 'Soft solid blue.' },
-  { id: 'lilac', name: 'Lilac', price: 25, blurb: 'Soft solid lilac.' },
-  { id: 'gingham', name: 'Gingham', price: 50, blurb: 'Cosy blue picnic check.', image: 'binders/gingham.png' },
-  { id: 'crush', name: 'Make My Heart Go', price: 50, blurb: 'Little lilac hearts.', image: 'binders/crush.png' },
-  { id: 'cheki-secret', name: 'Cheki Secret', price: 50, blurb: 'Rose pink candy stripes.', image: 'binders/cheki-secret.png' },
-  { id: 'cross', name: 'Crosses', price: 50, blurb: 'Monochrome crosses.', image: 'binders/cross.png' },
-  { id: 'matcha-bunny', name: 'Bunny Matcha', price: 100, blurb: 'Bunnies on matcha green.', image: 'binders/matcha-bunny.png' },
-  { id: 'skull', name: 'Skulls', price: 100, blurb: 'Little skulls on deep purple.', image: 'binders/skull.png' },
-  { id: 'lemonade', name: 'Make Lemonade', price: 100, blurb: 'Lemons and oranges.', image: 'binders/lemonade.png' },
-  { id: 'butterfly', name: 'Butterfly', price: 100, blurb: 'Pink butterflies on blue.', image: 'binders/butterfly.png' },
-  { id: 'cloud', name: 'Cloud', price: 60, blurb: 'Fluffy clouds on sky blue.', image: 'binders/cloud.png' },
+  { id: 'pastel-pink', name: 'Pastel Pink', price: 25, blurb: 'Solid colour background.' },
+  { id: 'pastel-blue', name: 'Pastel Blue', price: 25, blurb: 'Solid colour background.' },
+  { id: 'lilac', name: 'Lilac', price: 25, blurb: 'Solid colour background.' },
+  { id: 'gingham', name: 'Picnic Core', price: 50, blurb: 'Blue gingham pattern.', image: 'binders/gingham.png' },
+  { id: 'crush', name: 'Make My Heart Go', price: 50, blurb: 'Lilac hearts on lilac.', image: 'binders/crush.png' },
+  { id: 'cheki-secret', name: 'Cheki Secret', price: 50, blurb: "Inspired by Victoria's.", image: 'binders/cheki-secret.png' },
+  { id: 'cross', name: 'Cross My Heart', price: 50, blurb: 'Cross shapes over black.', image: 'binders/cross.png' },
+  { id: 'matcha-bunny', name: 'Bunny Matcha', price: 100, blurb: 'Famed bunny over green.', image: 'binders/matcha-bunny.png' },
+  { id: 'skull', name: 'Cute but Deadly', price: 100, blurb: 'Skull designs on purple.', image: 'binders/skull.png' },
+  { id: 'lemonade', name: 'Make Lemonade', price: 100, blurb: 'Summery lemons and oranges.', image: 'binders/lemonade.png' },
+  { id: 'butterfly', name: 'Give Me Butterflies', price: 100, blurb: 'Pinky butterflies on a pastel blue.', image: 'binders/butterfly.png' },
+  { id: 'cloud', name: 'Cloud 9', price: 60, blurb: 'Cute clouds on a blue sky.', image: 'binders/cloud.png' },
 ];
 
 export const STARTER_DESIGNS: BinderDesign[] = DESIGNS.filter((d) => d.price === 0).map((d) => d.id);
