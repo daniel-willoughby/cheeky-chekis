@@ -51,7 +51,11 @@ export function ShopPage() {
         })}
       </div>
 
-      <p className="body-text shop-note">There are more coming... have a request? Let Bel know ⸜(｡˃ ᵕ ˂ )⸝♡</p>
+      <p className="body-text shop-note">
+        There are more coming...
+        <br />
+        Have a request? Let Bel know ꕤ(˶˃ ᵕ ˂˶*)ꕤ
+      </p>
     </div>
   );
 }
