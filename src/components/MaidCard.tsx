@@ -20,7 +20,7 @@ export function MaidCard({
       style={{ ['--accent' as string]: maid.color }}
       onClick={onClick}
     >
-      {highlighted && <span className="maid-card__star">★</span>}
+      {highlighted && <img src={`${import.meta.env.BASE_URL}icons/star.png`} alt="" className="maid-card__star" />}
       <div className="maid-card__portrait">
         {maid.imageUrl ? (
           <img src={maid.imageUrl} alt="" className="maid-card__portrait-img" />

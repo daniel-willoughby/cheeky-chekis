@@ -25,7 +25,16 @@ export type BinderDesign =
   | 'sakura'
   | 'midnight'
   | 'arcade'
-  | 'candy';
+  | 'candy'
+  | 'butterfly'
+  | 'cheki-secret'
+  | 'cloud'
+  | 'cross'
+  | 'gingham'
+  | 'lemonade'
+  | 'crush'
+  | 'matcha-bunny'
+  | 'skull';
 
 export interface Binder {
   id: string;

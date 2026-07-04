@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProfile, useBinder, useBinderChekis, setBinderDesign } from '../data/hooks';
 import { useAuth } from '../data/auth';
-import { DESIGNS } from '../data/designs';
+import { DESIGNS, binderSwatchStyle } from '../data/designs';
 import { ChekiGrid } from '../components/ChekiGrid';
 import { BackHeader } from '../components/BackHeader';
 import './common.css';
@@ -22,7 +22,10 @@ export function BinderPage() {
   return (
     <div className="screen">
       <BackHeader title={binder?.name ?? 'Binder'} />
-      <div className={`binder--${binder?.design ?? 'classic'}`} style={{ height: 8, border: '3px solid var(--ink)', marginBottom: 16 }} />
+      <div
+        className={`binder--${binder?.design ?? 'classic'}`}
+        style={{ height: 8, border: '3px solid var(--ink)', marginBottom: 16, ...binderSwatchStyle(binder?.design ?? 'classic') }}
+      />
 
       {binder && canEdit && (
         <>
@@ -31,6 +34,7 @@ export function BinderPage() {
               <button
                 key={d.id}
                 className={`binder-designs__swatch binder--${d.id}${binder.design === d.id ? ' is-active' : ''}`}
+                style={binderSwatchStyle(d.id)}
                 title={d.name}
                 onClick={() => setBinderDesign(binder.id, d.id)}
               />

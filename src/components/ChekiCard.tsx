@@ -41,7 +41,8 @@ export function ChekiCard({
             className={`cheki-card__like${liked ? ' is-liked' : ''}`}
             onClick={(e) => { e.stopPropagation(); onToggleLike(); }}
           >
-            {liked ? '♥' : '♡'} {likeCount > 0 ? likeCount : ''}
+            <img src={`${import.meta.env.BASE_URL}icons/like.png`} alt="" className="cheki-card__like-icon" />
+            {likeCount > 0 ? likeCount : ''}
           </span>
         )}
       </div>

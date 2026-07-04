@@ -48,11 +48,20 @@
 }
 .cheki-card__like {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-family: var(--font-body);
   font-size: 18px;
   color: var(--pink-deep);
   padding: 2px 4px;
   cursor: pointer;
 }
-.cheki-card__like.is-liked { color: var(--pink-deep); }
+.cheki-card__like-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.cheki-card__like.is-liked .cheki-card__like-icon { opacity: 1; filter: none; }
 .cheki-card__like:active { transform: scale(0.9); }

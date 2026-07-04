@@ -15,7 +15,7 @@ import { useAuth } from '../data/auth';
 import { MAX_HIGHLIGHTS } from '../types';
 import type { BinderDesign, ChekiType } from '../types';
 import { CHEKI_TYPES } from '../data/chekiMeta';
-import { DESIGNS } from '../data/designs';
+import { DESIGNS, binderSwatchStyle } from '../data/designs';
 import { MaidCard } from '../components/MaidCard';
 import { ChekiGrid } from '../components/ChekiGrid';
 import { Pager, CHEKIS_PAGE_SIZE } from '../components/Pager';
@@ -194,6 +194,7 @@ export function ProfilePage() {
               <button
                 key={d.id}
                 className={`binder-designs__swatch binder--${d.id}${binderDesign === d.id ? ' is-active' : ''}`}
+                style={binderSwatchStyle(d.id)}
                 title={d.name}
                 onClick={() => setBinderDesign(d.id)}
               />

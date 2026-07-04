@@ -30,9 +30,9 @@
   position: absolute;
   top: 4px;
   right: 6px;
-  color: var(--gold);
-  font-size: 18px;
-  text-shadow: 1px 1px 0 var(--ink);
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(1px 1px 0 var(--ink));
 }
 
 .maid-card__portrait {

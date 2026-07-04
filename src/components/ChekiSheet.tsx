@@ -190,10 +190,11 @@ export function ChekiSheet({
                 {cheki.sold && <span className="chip gold">SOLD</span>}
                 {userId && (
                   <button
-                    className="sheet__like body-text"
+                    className={`sheet__like body-text${liked ? ' is-liked' : ''}`}
                     onClick={() => toggleChekiLike(cheki.id, userId, liked)}
                   >
-                    {liked ? '♥' : '♡'} {likeCount > 0 ? likeCount : ''}
+                    <img src={`${import.meta.env.BASE_URL}icons/like.png`} alt="" className="sheet__like-icon" />
+                    {likeCount > 0 ? likeCount : ''}
                   </button>
                 )}
               </div>

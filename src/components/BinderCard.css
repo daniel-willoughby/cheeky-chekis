@@ -54,3 +54,18 @@
 .binder--candy {
   background: repeating-linear-gradient(0deg, #fff2b8 0 10px, #ffd35b 10px 20px);
 }
+
+/* pattern-art designs (image set via inline style, background-color is a fallback) */
+.binder--gingham { background-color: #9ec8f5; }
+.binder--cloud { background-color: #9ec8f5; }
+.binder--crush { background-color: #e6cdf0; }
+.binder--butterfly { background-color: #9ec8f5; }
+.binder--matcha-bunny { background-color: #cdeab0; }
+.binder--lemonade { background-color: #ffcc8f; }
+.binder--cheki-secret { background-color: #f4c6d7; }
+.binder--cross { background-color: #000; }
+.binder--cross .binder-card__name,
+.binder--cross .binder-card__count { color: var(--paper); }
+.binder--skull { background-color: #3a2159; }
+.binder--skull .binder-card__name,
+.binder--skull .binder-card__count { color: var(--paper); }

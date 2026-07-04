@@ -1,6 +1,6 @@
 import { useProfile, buyDesign } from '../data/hooks';
 import { useAuth } from '../data/auth';
-import { DESIGNS, POINTS } from '../data/designs';
+import { DESIGNS, POINTS, binderSwatchStyle } from '../data/designs';
 import { BackHeader } from '../components/BackHeader';
 import './common.css';
 import './ShopPage.css';
@@ -31,7 +31,7 @@ export function ShopPage() {
           const canBuy = !isOwned && points >= d.price;
           return (
             <div key={d.id} className="shop-item pixel-box">
-              <div className={`shop-item__swatch binder--${d.id}`} />
+              <div className={`shop-item__swatch binder--${d.id}`} style={binderSwatchStyle(d.id)} />
               <div className="shop-item__name">{d.name}</div>
               <div className="body-text shop-item__blurb">{d.blurb}</div>
               {isOwned ? (
