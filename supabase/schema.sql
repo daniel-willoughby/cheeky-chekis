@@ -139,10 +139,15 @@ create table if not exists chekis (
   sold boolean not null default false,
   price int,
   notes text,
+  -- when set, this row is a "settlement" photo attached to the referenced
+  -- parent cheki; it inherits the parent's classifications and is hidden
+  -- from the normal collection views.
+  settlement_of uuid references chekis(id) on delete cascade,
   created_at timestamptz not null default now()
 );
 
 alter table chekis enable row level security;
+create index if not exists chekis_settlement_of_idx on chekis(settlement_of);
 
 create policy "see your own chekis, friends' chekis, or anything for sale"
   on chekis for select to authenticated

@@ -71,3 +71,26 @@
 .sheet__like.is-liked .sheet__like-icon { opacity: 1; filter: none; }
 .sheet__like:active { transform: scale(0.92); }
 .sheet__sell { margin-top: 8px; }
+
+.sheet__settlements {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.sheet__settlements-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  width: 100%;
+  padding-bottom: 4px;
+}
+.sheet__settlement-thumb {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 88px;
+  border: 3px solid var(--ink);
+  overflow: hidden;
+  background: var(--paper-2);
+}

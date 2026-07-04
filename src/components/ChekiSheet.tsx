@@ -17,11 +17,13 @@ import {
   useFriends,
   useChekiLikes,
   toggleChekiLike,
+  useSettlementsOf,
   formatKRW,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { POINTS } from '../data/designs';
 import { CHEKI_TYPES } from '../data/chekiMeta';
+import { SettlementUploadButton } from './SettlementUploadButton';
 import './ChekiSheet.css';
 
 export function ChekiSheet({
@@ -51,6 +53,7 @@ export function ChekiSheet({
   const binders = useMyBinders();
   const currentBinderId = useChekiBinderId(cheki.id);
   const friends = useFriends();
+  const settlements = useSettlementsOf(cheki.settlementOf ? undefined : cheki.id);
   const likes = useChekiLikes([cheki.id]);
   const likeCount = likes?.counts.get(cheki.id) ?? 0;
   const liked = !!(userId && likes?.likedBy.get(cheki.id)?.has(userId));
@@ -271,6 +274,26 @@ export function ChekiSheet({
                         SELL
                       </button>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {!cheki.settlementOf && ((settlements && settlements.length > 0) || mine) && (
+                <div className="sheet__settlements">
+                  <div className="section-label" style={{ marginTop: 4 }}>
+                    CHEKI SETTLEMENTS{settlements && settlements.length > 0 ? ` (${settlements.length})` : ''}
+                  </div>
+                  {settlements && settlements.length > 0 && (
+                    <div className="sheet__settlements-strip">
+                      {settlements.map((s) => (
+                        <div key={s.id} className="sheet__settlement-thumb">
+                          <ChekiImage cheki={s} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {mine && userId && (
+                    <SettlementUploadButton parent={cheki} userId={userId} />
                   )}
                 </div>
               )}

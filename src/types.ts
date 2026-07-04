@@ -17,6 +17,7 @@ export interface Cheki {
   sold: boolean;          // classified as sold, awards points once
   price?: number;         // in KRW
   notes?: string;
+  settlementOf?: string;  // parent cheki id, if this is a settlement photo
   createdAt: number;
 }
 
@@ -80,6 +81,7 @@ export interface PublicProfile {
   color: string;
   avatarUrl?: string;
   bio: string;
+  favouriteMaidIds: string[];
 }
 
 export type FriendshipStatus = 'pending' | 'accepted';

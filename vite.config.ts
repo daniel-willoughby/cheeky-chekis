@@ -9,8 +9,14 @@ export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
-      includeAssets: ['cheki.svg', 'icons/*.png'],
+      registerType: 'autoUpdate',
+      includeAssets: ['cheki.svg', 'icons/*.png', 'binders/*.png'],
+      workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2}'],
+      },
       manifest: {
         name: 'Cheeky Chekis',
         short_name: 'Chekis',

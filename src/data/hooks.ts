@@ -39,6 +39,7 @@ function mapCheki(row: Row): Cheki {
     sold: row.sold,
     price: row.price ?? undefined,
     notes: row.notes ?? undefined,
+    settlementOf: row.settlement_of ?? undefined,
     createdAt: Date.parse(row.created_at),
   };
 }
@@ -109,6 +110,7 @@ function mapPublicProfile(row: Row): PublicProfile {
     color: row.color,
     avatarUrl: imageUrl(row.avatar_path),
     bio: row.bio,
+    favouriteMaidIds: row.favourite_maid_ids ?? [],
   };
 }
 
@@ -396,8 +398,15 @@ export async function deleteCafe(cafeId: string): Promise<void> {
 export const useChekisByOwner = (ownerId?: string): Cheki[] | undefined =>
   useQuery(async () => {
     if (!ownerId) return [];
+    // settlements (settlement_of not null) are hidden from the main collection;
+    // they're browsed via the parent cheki or the Cheki Settlements binder.
     const rows = await run(
-      supabase.from('chekis').select('*').eq('owner_id', ownerId).order('created_at', { ascending: false }),
+      supabase
+        .from('chekis')
+        .select('*')
+        .eq('owner_id', ownerId)
+        .is('settlement_of', null)
+        .order('created_at', { ascending: false }),
     );
     return rows.map(mapCheki);
   }, [ownerId]);
@@ -410,7 +419,12 @@ export const useMyChekis = (): Cheki[] | undefined => {
 export const useForSaleChekis = (): Cheki[] | undefined =>
   useQuery(async () => {
     const rows = await run(
-      supabase.from('chekis').select('*').eq('for_sale', true).order('created_at', { ascending: false }),
+      supabase
+        .from('chekis')
+        .select('*')
+        .eq('for_sale', true)
+        .is('settlement_of', null)
+        .order('created_at', { ascending: false }),
     );
     return rows.map(mapCheki);
   }, []);
@@ -627,6 +641,71 @@ export async function setBinderDesign(binderId: string, design: BinderDesign): P
 export async function addChekiToBinder(chekiId: string, binderId: string): Promise<void> {
   await run(supabase.from('binder_chekis').upsert({ binder_id: binderId, cheki_id: chekiId }));
   bump();
+}
+
+// ---------- settlements ----------
+// A settlement is an extra photo attached to a cheki. It's stored as its own
+// cheki row (settlement_of -> parent), inherits the parent's classifications,
+// and is pinned to a dedicated "Cheki Settlements" binder.
+
+export const SETTLEMENTS_BINDER_NAME = 'Cheki Settlements';
+
+// Find (or lazily create) the user's dedicated settlements binder.
+async function ensureSettlementsBinder(userId: string): Promise<string> {
+  const existing = await run(
+    supabase
+      .from('binders')
+      .select('id')
+      .eq('owner_id', userId)
+      .eq('name', SETTLEMENTS_BINDER_NAME)
+      .maybeSingle(),
+  );
+  if (existing?.id) return existing.id;
+  const row = await run(
+    supabase
+      .from('binders')
+      .insert({ owner_id: userId, name: SETTLEMENTS_BINDER_NAME, design: 'classic' })
+      .select('id')
+      .single(),
+  );
+  return row.id;
+}
+
+// Settlement photos attached to a given parent cheki.
+export const useSettlementsOf = (chekiId?: string): Cheki[] | undefined =>
+  useQuery(async () => {
+    if (!chekiId) return [];
+    const rows = await run(
+      supabase.from('chekis').select('*').eq('settlement_of', chekiId).order('created_at', { ascending: true }),
+    );
+    return rows.map(mapCheki);
+  }, [chekiId]);
+
+// Create a settlement: inherits the parent's maids/cafe/date/type, lands in
+// the settlements binder. No upload points — it's an attachment, not a new cheki.
+export async function createSettlement(userId: string, parent: Cheki, imagePath: string): Promise<string> {
+  const binderId = await ensureSettlementsBinder(userId);
+  const row = await run(
+    supabase
+      .from('chekis')
+      .insert({
+        owner_id: userId,
+        image_path: imagePath,
+        maid_ids: parent.maidIds,
+        cafe_id: parent.cafeId ?? null,
+        date: parent.date ?? null,
+        type: parent.type,
+        status: 'on-hand',
+        for_sale: false,
+        sold: false,
+        settlement_of: parent.id,
+      })
+      .select('id')
+      .single(),
+  );
+  await run(supabase.from('binder_chekis').insert({ binder_id: binderId, cheki_id: row.id }));
+  bump();
+  return row.id;
 }
 
 // ---------- friends ----------

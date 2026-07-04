@@ -11,8 +11,10 @@ import {
 import { CHEKI_TYPES } from '../data/chekiMeta';
 import { BackHeader } from '../components/BackHeader';
 import { BinderCard } from '../components/BinderCard';
+import { MaidCard } from '../components/MaidCard';
 import { ChekiGrid } from '../components/ChekiGrid';
 import { Pager, CHEKIS_PAGE_SIZE } from '../components/Pager';
+import { MAX_HIGHLIGHTS } from '../types';
 import type { ChekiType } from '../types';
 import './common.css';
 import './FriendProfilePage.css';
@@ -31,6 +33,11 @@ export function FriendProfilePage() {
   const [maidId, setMaidId] = useState('');
   const [cafeId, setCafeId] = useState('');
   const [page, setPage] = useState(0);
+
+  const maidMap = new Map((maids ?? []).map((m) => [m.id, m]));
+  const highlights = (friend?.favouriteMaidIds ?? [])
+    .map((id) => maidMap.get(id))
+    .filter(Boolean);
 
   // only maids/cafes that appear in this friend's collection
   const ownMaidIds = new Set((chekis ?? []).flatMap((c) => c.maidIds));
@@ -70,6 +77,17 @@ export function FriendProfilePage() {
           <span className="chip blue">{chekis?.length ?? 0} CHEKIS</span>
         </div>
       </div>
+
+      {highlights.length > 0 && (
+        <>
+          <div className="section-label">HIGHLIGHTED MAIDS ({highlights.length}/{MAX_HIGHLIGHTS})</div>
+          <div className="hl-grid">
+            {highlights.map((m) => (
+              <MaidCard key={m!.id} maid={m!} compact highlighted onClick={() => navigate(`/maids/${m!.id}`)} />
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="section-label">THEIR BINDERS</div>
       {binders && binders.length === 0 && <div className="empty pixel-box">No binders.</div>}

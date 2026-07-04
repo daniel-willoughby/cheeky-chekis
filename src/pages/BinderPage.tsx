@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useProfile, useBinder, useBinderChekis, setBinderDesign } from '../data/hooks';
+import { useProfile, useBinder, useBinderChekis, useMaids, setBinderDesign } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { DESIGNS, binderSwatchStyle } from '../data/designs';
 import { ChekiGrid } from '../components/ChekiGrid';
@@ -14,10 +15,16 @@ export function BinderPage() {
   const profile = useProfile();
   const binder = useBinder(binderId);
   const chekis = useBinderChekis(binderId);
+  const maids = useMaids();
+  const [maidId, setMaidId] = useState('');
 
   const owned = profile?.ownedDesigns ?? [];
   const ownedDesigns = DESIGNS.filter((d) => owned.includes(d.id));
   const canEdit = binder?.ownerId === userId;
+
+  const inBinderMaidIds = new Set((chekis ?? []).flatMap((c) => c.maidIds));
+  const maidOptions = (maids ?? []).filter((m) => inBinderMaidIds.has(m.id));
+  const filtered = (chekis ?? []).filter((c) => !maidId || c.maidIds.includes(maidId));
 
   return (
     <div className="screen">
@@ -44,8 +51,20 @@ export function BinderPage() {
         </>
       )}
 
+      {maidOptions.length > 0 && (
+        <div className="row" style={{ marginBottom: 12 }}>
+          <select className="pixel-select" value={maidId} onChange={(e) => setMaidId(e.target.value)}>
+            <option value="">All maids</option>
+            {maidOptions.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+        </div>
+      )}
+
       {chekis && chekis.length === 0 && <div className="empty pixel-box">Nothing here yet (·•᷄∩•᷅ )</div>}
-      <ChekiGrid chekis={chekis ?? []} />
+      {chekis && chekis.length > 0 && filtered.length === 0 && (
+        <div className="empty pixel-box">No chekis match.</div>
+      )}
+      <ChekiGrid chekis={filtered} />
     </div>
   );
 }
