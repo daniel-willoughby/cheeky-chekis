@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { usePendingFriendActivityCount, useIncomingRequests } from '../data/hooks';
+import { usePendingFriendActivityCount, useIncomingRequests, usePendingTransfersToMe } from '../data/hooks';
 import './TabBar.css';
 
 const base = import.meta.env.BASE_URL;
@@ -15,7 +15,8 @@ export function TabBar() {
   const navigate = useNavigate();
   const incoming = useIncomingRequests();
   const pendingActivity = usePendingFriendActivityCount();
-  const badge = pendingActivity + (incoming?.length ?? 0);
+  const pendingTransfers = usePendingTransfersToMe();
+  const badge = pendingActivity + (incoming?.length ?? 0) + (pendingTransfers?.length ?? 0);
 
   return (
     <nav className="tabbar">

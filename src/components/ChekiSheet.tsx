@@ -7,7 +7,8 @@ import { ChekiImage } from './ChekiImage';
 import {
   toggleForSale,
   markSold,
-  markSoldToFriend,
+  requestChekiTransfer,
+  cancelChekiTransfer,
   updateCheki,
   setChekiBinder,
   deleteCheki,
@@ -60,6 +61,8 @@ export function ChekiSheet({
   const liked = !!(userId && likes?.likedBy.get(cheki.id)?.has(userId));
   const givers = usePublicProfilesByIds(cheki.receivedFrom ? [cheki.receivedFrom] : []);
   const giver = cheki.receivedFrom ? givers?.get(cheki.receivedFrom) : undefined;
+  const pendingRecipients = usePublicProfilesByIds(cheki.transferPendingTo ? [cheki.transferPendingTo] : []);
+  const pendingFriendName = cheki.transferPendingTo ? pendingRecipients?.get(cheki.transferPendingTo)?.username : undefined;
 
   const [draftType, setDraftType] = useState<ChekiType>(cheki.type);
   const [draftMaidIds, setDraftMaidIds] = useState<string[]>(cheki.maidIds);
@@ -195,6 +198,8 @@ export function ChekiSheet({
                 {cheki.forSale && <span className="chip pink">{formatKRW(cheki.price)}</span>}
                 {cheki.receivedFrom ? (
                   <span className="chip gold">SECOND LIFE</span>
+                ) : cheki.transferPendingTo ? (
+                  <span className="chip blue">PENDING TRANSFER</span>
                 ) : (
                   cheki.sold && <span className="chip gold">SOLD</span>
                 )}
@@ -226,11 +231,27 @@ export function ChekiSheet({
                 </button>
               )}
 
-              {mine && !cheki.sold && (
+              {mine && !cheki.sold && !cheki.transferPendingTo && (
                 <button className="chip purple" style={{ alignSelf: 'flex-start' }} onClick={startEdit}>EDIT</button>
               )}
 
-              {mine && !cheki.sold && (
+              {mine && cheki.transferPendingTo && (
+                <div className="sheet__sell">
+                  <span className="body-text" style={{ fontSize: 17 }}>
+                    {pendingFriendName ? `Waiting for @${pendingFriendName} to accept...` : 'Waiting for them to accept...'}
+                  </span>
+                  <button
+                    className="btn ghost"
+                    style={{ width: '100%', marginTop: 8 }}
+                    disabled={busy}
+                    onClick={async () => { setBusy(true); try { await cancelChekiTransfer(cheki.id); } finally { setBusy(false); } }}
+                  >
+                    {busy ? '...' : 'CANCEL REQUEST'}
+                  </button>
+                </div>
+              )}
+
+              {mine && !cheki.sold && !cheki.transferPendingTo && (
                 <div className="sheet__sell">
                   {feedback ? (
                     <button className="btn muted" style={{ width: '100%' }} disabled>
@@ -251,7 +272,7 @@ export function ChekiSheet({
                           className="btn pink"
                           style={{ flex: 1 }}
                           disabled={busy || !friendId}
-                          onClick={() => withFeedback('SOLD', () => markSoldToFriend(cheki, friendId))}
+                          onClick={() => withFeedback('REQUEST SENT', () => requestChekiTransfer(cheki, friendId))}
                         >
                           {busy ? '...' : 'CONFIRM'}
                         </button>

@@ -19,6 +19,7 @@ export interface Cheki {
   notes?: string;
   settlementOf?: string;  // parent cheki id, if this is a settlement photo
   receivedFrom?: string;  // friend's profile id, if received via sold-to-friend transfer
+  transferPendingTo?: string; // friend's profile id, if a sold-to-friend transfer is awaiting their accept
   createdAt: number;
 }
 

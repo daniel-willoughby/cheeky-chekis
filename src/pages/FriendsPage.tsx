@@ -5,6 +5,10 @@ import {
   useFriendActivity,
   useIncomingRequests,
   useOutgoingRequestIds,
+  usePendingTransfersToMe,
+  usePublicProfilesByIds,
+  acceptChekiTransfer,
+  declineChekiTransfer,
   searchProfiles,
   sendFriendRequest,
   acceptFriendRequest,
@@ -13,6 +17,7 @@ import {
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { ChekiGrid } from '../components/ChekiGrid';
+import { ChekiImage } from '../components/ChekiImage';
 import type { PublicProfile } from '../types';
 import './common.css';
 import './FriendsPage.css';
@@ -24,6 +29,18 @@ export function FriendsPage() {
   const activity = useFriendActivity();
   const incoming = useIncomingRequests();
   const outgoingIds = useOutgoingRequestIds();
+  const pendingTransfers = usePendingTransfersToMe();
+  const senders = usePublicProfilesByIds((pendingTransfers ?? []).map((c) => c.ownerId));
+  const [transferBusy, setTransferBusy] = useState<string | null>(null);
+
+  async function respondToTransfer(chekiId: string, accept: boolean) {
+    setTransferBusy(chekiId);
+    try {
+      await (accept ? acceptChekiTransfer(chekiId) : declineChekiTransfer(chekiId));
+    } finally {
+      setTransferBusy(null);
+    }
+  }
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PublicProfile[]>([]);
@@ -91,6 +108,36 @@ export function FriendsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </>
+      )}
+
+      {pendingTransfers && pendingTransfers.length > 0 && (
+        <>
+          <div className="section-label">CHEKI TRANSFERS</div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {pendingTransfers.map((c) => {
+              const sender = senders?.get(c.ownerId);
+              const busy = transferBusy === c.id;
+              return (
+                <div key={c.id} className="row search-result pixel-box" style={{ padding: 10, gap: 10 }}>
+                  <div style={{ width: 48, height: 64, flexShrink: 0, border: '3px solid var(--ink)', overflow: 'hidden' }}>
+                    <ChekiImage cheki={c} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="body-text" style={{ margin: 0, fontSize: 16, lineHeight: 1.2 }}>
+                      Hey cheeky friend! {sender?.name ?? 'A friend'} says this cheki is yours! Would you like to accept?
+                    </p>
+                    <div className="row" style={{ gap: 6, marginTop: 8 }}>
+                      <button className="chip purple" disabled={busy} onClick={() => respondToTransfer(c.id, true)}>
+                        {busy ? '...' : 'ACCEPT'}
+                      </button>
+                      <button className="chip" disabled={busy} onClick={() => respondToTransfer(c.id, false)}>DECLINE</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </>
       )}

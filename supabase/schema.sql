@@ -146,6 +146,8 @@ create table if not exists chekis (
   -- set when this cheki was received via a friend's sold-to-friend transfer;
   -- points at the friend who gave it away, drives the "Second Life" tag.
   received_from uuid references profiles(id) on delete set null,
+  -- set while a sold-to-friend transfer is awaiting the recipient's accept.
+  transfer_pending_to uuid references profiles(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -207,28 +209,34 @@ create policy "manage binder_chekis for your own binders"
   using (exists (select 1 from binders b where b.id = binder_id and b.owner_id = auth.uid()))
   with check (exists (select 1 from binders b where b.id = binder_id and b.owner_id = auth.uid()));
 
--- transfer a sold cheki to a friend's collection. A normal UPDATE can't
--- change owner_id (RLS re-checks the new row against the same USING clause),
--- so this SECURITY DEFINER function verifies ownership + friendship first.
-create or replace function transfer_cheki_to_friend(p_cheki_id uuid, p_new_owner uuid)
+-- Sold-to-friend transfers require the recipient's consent: the seller sets
+-- transfer_pending_to (a plain update on their own row, no special
+-- privileges needed); the recipient then accepts or declines. Accepting
+-- changes owner_id, which RLS won't allow via a plain update (it re-checks
+-- the new row against the same USING clause), so that step is a SECURITY
+-- DEFINER function.
+create or replace function accept_cheki_transfer(p_cheki_id uuid)
 returns void as $$
 declare
   v_owner uuid;
+  v_pending uuid;
 begin
-  select owner_id into v_owner from chekis where id = p_cheki_id;
+  select owner_id, transfer_pending_to into v_owner, v_pending from chekis where id = p_cheki_id;
   if v_owner is null then
     raise exception 'cheki not found';
   end if;
-  if v_owner <> auth.uid() then
-    raise exception 'not your cheki';
-  end if;
-  if not are_friends(auth.uid(), p_new_owner) then
-    raise exception 'not friends with that user';
+  if v_pending is null or v_pending <> auth.uid() then
+    raise exception 'no pending transfer for you';
   end if;
 
   update chekis
-    set owner_id = p_new_owner, sold = true, for_sale = false, price = null, received_from = v_owner
+    set owner_id = auth.uid(), sold = true, for_sale = false, price = null,
+        received_from = v_owner, transfer_pending_to = null
     where id = p_cheki_id;
+
+  -- award the seller their sold-points now that the transfer is confirmed
+  -- (keep in sync with POINTS.sold in src/data/designs.ts)
+  update profiles set points = points + 10 where id = v_owner;
 
   delete from binder_chekis
     using binders
@@ -238,7 +246,21 @@ begin
 end;
 $$ language plpgsql security definer set search_path = public;
 
-grant execute on function transfer_cheki_to_friend(uuid, uuid) to authenticated;
+create or replace function decline_cheki_transfer(p_cheki_id uuid)
+returns void as $$
+declare
+  v_pending uuid;
+begin
+  select transfer_pending_to into v_pending from chekis where id = p_cheki_id;
+  if v_pending is null or v_pending <> auth.uid() then
+    raise exception 'no pending transfer for you';
+  end if;
+  update chekis set transfer_pending_to = null where id = p_cheki_id;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+grant execute on function accept_cheki_transfer(uuid) to authenticated;
+grant execute on function decline_cheki_transfer(uuid) to authenticated;
 
 -- ============ cheki likes ============
 create table if not exists cheki_likes (

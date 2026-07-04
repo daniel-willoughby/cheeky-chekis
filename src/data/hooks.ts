@@ -41,6 +41,7 @@ function mapCheki(row: Row): Cheki {
     notes: row.notes ?? undefined,
     settlementOf: row.settlement_of ?? undefined,
     receivedFrom: row.received_from ?? undefined,
+    transferPendingTo: row.transfer_pending_to ?? undefined,
     createdAt: Date.parse(row.created_at),
   };
 }
@@ -563,18 +564,53 @@ export async function markSold(cheki: Cheki): Promise<void> {
   bump();
 }
 
-// Sold to a friend: transfers the cheki into their collection via a
-// SECURITY DEFINER function (RLS won't let a plain update change owner_id).
-export async function markSoldToFriend(cheki: Cheki, friendId: string): Promise<void> {
-  const { error } = await supabase.rpc('transfer_cheki_to_friend', {
-    p_cheki_id: cheki.id,
-    p_new_owner: friendId,
-  });
+// Sold to a friend: doesn't transfer instantly. Pulls the cheki off the
+// market and marks it as awaiting the friend's accept; they get a
+// notification and must accept before ownership actually changes.
+export async function requestChekiTransfer(cheki: Cheki, friendId: string): Promise<void> {
+  await writeChecked(
+    supabase.from('chekis').update({ transfer_pending_to: friendId, for_sale: false }).eq('id', cheki.id),
+  );
+  bump();
+}
+
+// Seller-side cancel of a transfer they requested (still their cheki, so a
+// plain update is enough — no SECURITY DEFINER function needed).
+export async function cancelChekiTransfer(chekiId: string): Promise<void> {
+  await writeChecked(supabase.from('chekis').update({ transfer_pending_to: null }).eq('id', chekiId));
+  bump();
+}
+
+// Cheki transfers pending my accept.
+export const usePendingTransfersToMe = (): Cheki[] | undefined => {
+  const { userId } = useAuth();
+  return useQuery(async () => {
+    if (!userId) return [];
+    const rows = await run(
+      supabase.from('chekis').select('*').eq('transfer_pending_to', userId).order('created_at', { ascending: false }),
+    );
+    return rows.map(mapCheki);
+  }, [userId]);
+};
+
+// Accept a pending transfer: ownership moves to me via a SECURITY DEFINER
+// function (RLS won't let a plain update change owner_id); the seller's
+// sold-points are awarded there once the transfer is confirmed.
+export async function acceptChekiTransfer(chekiId: string): Promise<void> {
+  const { error } = await supabase.rpc('accept_cheki_transfer', { p_cheki_id: chekiId });
   if (error) {
     pushToast(error.message);
     throw new Error(error.message);
   }
-  await awardPoints(cheki.ownerId, POINTS.sold);
+  bump();
+}
+
+export async function declineChekiTransfer(chekiId: string): Promise<void> {
+  const { error } = await supabase.rpc('decline_cheki_transfer', { p_cheki_id: chekiId });
+  if (error) {
+    pushToast(error.message);
+    throw new Error(error.message);
+  }
   bump();
 }
 
