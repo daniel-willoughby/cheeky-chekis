@@ -23,12 +23,20 @@
   text-decoration: none;
   color: var(--ink);
   opacity: 0.7;
+  transition: opacity 0.15s ease, background 0.15s ease;
 }
 .tabbar__tab.is-active {
   opacity: 1;
   background: var(--pink-deep);
   color: var(--paper);
 }
+/* icon does a happy little hop when its tab becomes active */
+@keyframes tab-hop {
+  0% { transform: translateY(0); }
+  45% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+.tabbar__tab.is-active .tabbar__icon { animation: tab-hop 0.25s ease-out; }
 
 .tabbar__icon {
   position: relative;
@@ -91,6 +99,12 @@
 .tabbar__upload:active {
   transform: translateY(4px);
   box-shadow: 0 1px 0 var(--purple-deep);
+}
+@media (hover: hover) {
+  .tabbar__upload:hover:not(:active) {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 var(--purple-deep);
+  }
 }
 .tabbar__upload-plus {
   font-family: var(--font-pixel);

@@ -40,10 +40,13 @@
   border: 3px solid var(--ink);
   box-shadow: 3px 3px 0 var(--ink);
   padding: 0;
+  transition: transform 0.1s ease;
 }
+.binder-designs__swatch:active { transform: scale(0.9); }
 .binder-designs__swatch.is-active {
   outline: 3px solid var(--pink-deep);
   outline-offset: 2px;
+  transform: scale(1.08);
 }
 .profile-hero__info { flex: 1; min-width: 0; }
 .profile-hero__name {
