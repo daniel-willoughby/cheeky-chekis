@@ -224,3 +224,14 @@ insert into maids (id, cafe_id, name, color, emoji, hair_color, specialty, bio) 
   ('22222222-2222-2222-2222-222222222206', '11111111-1111-1111-1111-111111111103', 'Bora', '#5b8def', '🌊', 'aqua', 'Live singing', 'Starlight headliner. Seaside voice.'),
   ('22222222-2222-2222-2222-222222222207', '11111111-1111-1111-1111-111111111103', 'Nari', '#9b6cff', '🌟', 'violet', 'Cheki trades', 'Knows every collector by name.')
 on conflict (id) do nothing;
+
+-- ============ table privileges ============
+-- RLS restricts which rows each user can touch; these grants let the
+-- authenticated role issue the statements in the first place.
+grant usage on schema public to authenticated, anon;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant select on all tables in schema public to anon;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public
+  grant select on tables to anon;
