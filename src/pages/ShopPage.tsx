@@ -16,12 +16,12 @@ export function ShopPage() {
       <BackHeader title="Binder Shop" />
 
       <div className="shop-balance pixel-box">
-        <span className="shop-balance__label">CHEKI POINTS</span>
-        <span className="shop-balance__value">★ {points}</span>
+        <span className="shop-balance__label">CHEKI MONS</span>
+        <span className="shop-balance__value">♥ {points}</span>
       </div>
 
       <div className="shop-earn body-text">
-        Earn points: upload +{POINTS.upload}, sell a cheki +{POINTS.sold}, daily login +{POINTS.dailyLogin}.
+        Earn Cheki Mons: upload +{POINTS.upload}, sell a cheki +{POINTS.sold}, daily login +{POINTS.dailyLogin}.
       </div>
 
       <div className="section-label">BINDER DESIGNS</div>
@@ -43,7 +43,7 @@ export function ShopPage() {
                   disabled={!canBuy || !userId}
                   onClick={() => userId && buyDesign(userId, d.id)}
                 >
-                  ★ {d.price}
+                  ♥ {d.price}
                 </button>
               )}
             </div>
@@ -51,7 +51,7 @@ export function ShopPage() {
         })}
       </div>
 
-      <p className="body-text shop-note">More designs coming soon.</p>
+      <p className="body-text shop-note">There are more coming... have a request? Let Bel know ⸜(｡˃ ᵕ ˂ )⸝♡</p>
     </div>
   );
 }

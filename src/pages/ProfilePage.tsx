@@ -155,7 +155,7 @@ export function ProfilePage() {
             </>
           )}
           <div className="row wrap" style={{ marginTop: 6 }}>
-            <button className="chip gold" onClick={() => navigate('/shop')}>★ {profile?.points ?? 0} PTS</button>
+            <button className="chip gold" onClick={() => navigate('/shop')}>♥ {profile?.points ?? 0} MONS</button>
             <span className="chip purple">{onHand} ON HAND</span>
             {onWay > 0 && <span className="chip blue">{onWay} ON THE WAY</span>}
           </div>
