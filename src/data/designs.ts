@@ -44,7 +44,15 @@ export function binderSwatchStyle(id: BinderDesign): CSSProperties | undefined {
   const image = designImage(id);
   if (!image) return undefined;
   const base = import.meta.env.BASE_URL;
-  return { backgroundImage: `url(${base}${image})`, backgroundSize: '48px 48px' };
+  // These are single pre-made pattern canvases, not small tileable units —
+  // scale each one to fill the swatch instead of repeating it (repeating
+  // squished the whole canvas into a tiny tile and the seams looked awful).
+  return {
+    backgroundImage: `url(${base}${image})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  };
 }
 
 // UTC day string, matches the daily-ladder convention.
