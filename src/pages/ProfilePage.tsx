@@ -110,7 +110,9 @@ export function ProfilePage() {
           <div className="row wrap" style={{ justifyContent: 'space-between' }}>
             <h1 className="profile-hero__name">{profile?.name ?? 'You'}</h1>
             <div className="row" style={{ gap: 6, flexShrink: 0 }}>
-              <button className="chip" onClick={() => navigate('/settings')}>⚙️</button>
+              <button className="chip profile-hero__settings-btn" onClick={() => navigate('/settings')}>
+                <img src={`${import.meta.env.BASE_URL}icons/settings.png`} alt="Settings" />
+              </button>
               <button className="chip purple" onClick={startEdit}>EDIT</button>
             </div>
           </div>

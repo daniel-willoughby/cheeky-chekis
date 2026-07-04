@@ -1,7 +1,8 @@
 .settings-logo {
-  font-size: 48px;
-  text-align: center;
-  margin: 6px 0 16px;
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 6px auto 16px;
 }
 
 .settings-row {

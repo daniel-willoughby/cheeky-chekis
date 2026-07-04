@@ -14,7 +14,7 @@ export function SettingsPage() {
     <div className="screen">
       <BackHeader title="Settings" />
 
-      <div className="settings-logo">⚙️</div>
+      <img src={`${import.meta.env.BASE_URL}icons/settings.png`} alt="" className="settings-logo" />
 
       <div className="section-label">ACCESSIBILITY</div>
 

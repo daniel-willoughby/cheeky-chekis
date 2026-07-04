@@ -22,6 +22,17 @@
   object-fit: cover;
 }
 
+.profile-hero__settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+.profile-hero__settings-btn img {
+  width: 16px;
+  height: 16px;
+}
+
 /* binder design swatches (create-binder form) */
 .binder-designs__swatch {
   width: 46px;
