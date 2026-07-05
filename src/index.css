@@ -150,6 +150,14 @@ a { color: var(--purple-deep); }
   image-rendering: pixelated;
 }
 
+/* fallback badge for cafes without an image (replaces the old bow emoji) */
+.cafe-badge__mystery {
+  width: 66%;
+  height: 66%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
 .chip { cursor: pointer; }
 
 .pixel-select {

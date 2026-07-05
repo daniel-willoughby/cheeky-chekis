@@ -5,6 +5,7 @@ import { CHEKI_TYPES } from '../data/chekiMeta';
 import type { ChekiType } from '../types';
 import { MaidCard } from '../components/MaidCard';
 import { BackHeader } from '../components/BackHeader';
+import { CafeBadge } from '../components/CafeBadge';
 import { ImageUploadButton } from '../components/ImageUploadButton';
 import './common.css';
 import './CafeDetailPage.css';
@@ -151,7 +152,7 @@ export function CafeDetailPage() {
 
       <div className="cafe-hero pixel-box" style={{ ['--accent' as string]: cafe.color }}>
         <div className="cafe-hero__emoji">
-          {cafe.imageUrl ? <img src={cafe.imageUrl} alt="" className="cafe-hero__img" /> : cafe.emoji}
+          <CafeBadge cafe={cafe} imgClass="cafe-hero__img" />
         </div>
         <div style={{ flex: 1 }}>
           <div className="body-text cafe-detail__line"><b>Area:</b> {cafe.district}</div>

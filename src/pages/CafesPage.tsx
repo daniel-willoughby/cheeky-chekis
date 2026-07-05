@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCafes, useMaids, createCafe, formatKRW } from '../data/hooks';
+import { CafeBadge } from '../components/CafeBadge';
 import './common.css';
 import './CafesPage.css';
 
@@ -46,7 +47,7 @@ export function CafesPage() {
               onClick={() => navigate(`/cafes/${cafe.id}`)}
             >
               <div className="cafe-row__badge">
-                {cafe.imageUrl ? <img src={cafe.imageUrl} alt="" className="cafe-row__badge-img" /> : cafe.emoji}
+                <CafeBadge cafe={cafe} imgClass="cafe-row__badge-img" />
               </div>
               <div className="cafe-row__info">
                 <div className="cafe-row__name">{cafe.name}</div>

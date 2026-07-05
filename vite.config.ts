@@ -25,7 +25,6 @@ export default defineConfig(({ command }) => ({
         background_color: '#efe4ff',
         display: 'standalone',
         icons: [
-          { src: 'cheki.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'icons/logo.png', sizes: '256x256', type: 'image/png', purpose: 'any' },
           { src: 'icons/logo.png', sizes: '256x256', type: 'image/png', purpose: 'maskable' },
         ],
