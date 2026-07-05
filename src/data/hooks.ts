@@ -230,23 +230,14 @@ export async function toggleHighlight(userId: string, maidId: string): Promise<v
   bump();
 }
 
-// Award the daily login bonus once per UTC day. Also backfills owned designs.
-export async function claimDailyBonus(userId: string): Promise<boolean> {
-  const row = await run(supabase.from('profiles').select('*').eq('id', userId).single());
-  const today = utcDay();
-  const patch: Row = {};
-  if (!row.owned_designs || row.owned_designs.length === 0) patch.owned_designs = STARTER_DESIGNS;
-  let awarded = false;
-  if (row.last_login_at !== today) {
-    patch.points = (row.points ?? 0) + POINTS.dailyLogin;
-    patch.last_login_at = today;
-    awarded = true;
-  }
-  if (Object.keys(patch).length) {
-    await writeChecked(supabase.from('profiles').update(patch).eq('id', userId));
+// Backfill owned designs on login. Cheki Mons are only earned by selling a
+// cheki, so there's no daily login bonus.
+export async function claimDailyBonus(userId: string): Promise<void> {
+  const row = await run(supabase.from('profiles').select('owned_designs').eq('id', userId).single());
+  if (!row.owned_designs || row.owned_designs.length === 0) {
+    await writeChecked(supabase.from('profiles').update({ owned_designs: STARTER_DESIGNS }).eq('id', userId));
     bump();
   }
-  return awarded;
 }
 
 export async function buyDesign(userId: string, design: BinderDesign): Promise<boolean> {
@@ -477,7 +468,7 @@ export async function addCheki(
   if (input.binderId) {
     await run(supabase.from('binder_chekis').insert({ binder_id: input.binderId, cheki_id: row.id }));
   }
-  await awardPoints(userId, POINTS.upload);
+  // Cheki Mons are only earned by selling a cheki, so uploading awards none.
   bump();
   return row.id;
 }

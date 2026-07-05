@@ -109,7 +109,7 @@ export function ProfilePage() {
           {profile?.avatarUrl ? (
             <img src={profile.avatarUrl} alt="" className="profile-hero__avatar-img" />
           ) : (
-            profile?.emoji ?? '🎮'
+            <img src={`${import.meta.env.BASE_URL}icons/mystery.png`} alt="" className="avatar-mystery" />
           )}
         </div>
         <div className="profile-hero__info">

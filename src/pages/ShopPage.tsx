@@ -21,7 +21,7 @@ export function ShopPage() {
       </div>
 
       <div className="shop-earn body-text">
-        Earn Cheki Mons: upload +{POINTS.upload}, sell a cheki +{POINTS.sold}, daily login +{POINTS.dailyLogin}.
+        Earn Cheki Mons by selling a cheki: +{POINTS.sold} each.
       </div>
 
       <div className="section-label">BINDER DESIGNS</div>

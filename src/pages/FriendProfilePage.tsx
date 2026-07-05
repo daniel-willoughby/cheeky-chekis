@@ -69,7 +69,7 @@ export function FriendProfilePage() {
 
       <div className="friend-hero pixel-box" style={{ ['--accent' as string]: friend.color }}>
         <div className="friend-hero__avatar">
-          {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="friend-hero__avatar-img" /> : friend.emoji}
+          {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="friend-hero__avatar-img" /> : <img src={`${import.meta.env.BASE_URL}icons/mystery.png`} alt="" className="avatar-mystery" />}
         </div>
         <div>
           <div className="friend-hero__name">{friend.name}</div>

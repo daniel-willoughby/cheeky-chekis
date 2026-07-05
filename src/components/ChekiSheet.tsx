@@ -6,7 +6,6 @@ import { MULTI_MAID_TYPES } from '../types';
 import { ChekiImage } from './ChekiImage';
 import {
   toggleForSale,
-  markSold,
   requestChekiTransfer,
   cancelChekiTransfer,
   updateCheki,
@@ -24,7 +23,6 @@ import {
   formatKRW,
 } from '../data/hooks';
 import { useAuth } from '../data/auth';
-import { POINTS } from '../data/designs';
 import { CHEKI_TYPES } from '../data/chekiMeta';
 import { SettlementUploadButton } from './SettlementUploadButton';
 import './ChekiSheet.css';
@@ -46,6 +44,7 @@ export function ChekiSheet({
   const [feedback, setFeedback] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [askFriend, setAskFriend] = useState(false);
+  const [listing, setListing] = useState(false);
   const [friendId, setFriendId] = useState('');
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -233,7 +232,12 @@ export function ChekiSheet({
               )}
 
               {mine && !cheki.transferPendingTo && !cheki.settlementOf && (
-                <button className="chip purple" style={{ alignSelf: 'flex-start' }} onClick={startEdit}>EDIT</button>
+                <div className="row wrap" style={{ gap: 6 }}>
+                  <button className="chip purple" onClick={startEdit}>EDIT</button>
+                  {(!cheki.sold || cheki.receivedFrom) && !cheki.forSale && !listing && !feedback && !askFriend && (
+                    <button className="chip pink" onClick={() => setListing(true)}>SELL</button>
+                  )}
+                </div>
               )}
 
               {mine && cheki.transferPendingTo && (
@@ -252,7 +256,8 @@ export function ChekiSheet({
                 </div>
               )}
 
-              {mine && (!cheki.sold || cheki.receivedFrom) && !cheki.transferPendingTo && !cheki.settlementOf && (
+              {mine && (!cheki.sold || cheki.receivedFrom) && !cheki.transferPendingTo && !cheki.settlementOf &&
+                (feedback || askFriend || cheki.forSale || listing) && (
                 <div className="sheet__sell">
                   {feedback ? (
                     <button className="btn muted" style={{ width: '100%' }} disabled>
@@ -286,27 +291,28 @@ export function ChekiSheet({
                         <button className="btn ghost" style={{ flex: 1 }} disabled={busy} onClick={() => withFeedback('UNLISTED', () => toggleForSale(cheki))}>
                           UNLIST
                         </button>
-                        <button className="btn ghost" style={{ flex: 1 }} disabled={busy} onClick={() => withFeedback('SOLD', () => markSold(cheki))}>
-                          NO, +{POINTS.sold}
-                        </button>
                         <button className="btn pink" style={{ flex: 1 }} disabled={busy} onClick={() => setAskFriend(true)}>
                           YES
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="row" style={{ gap: 8 }}>
+                    <div style={{ display: 'grid', gap: 8 }}>
                       <input
                         className="pixel-select"
-                        style={{ flex: 1 }}
+                        style={{ width: '100%' }}
                         inputMode="numeric"
                         placeholder="Price KRW"
                         value={price}
                         onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))}
+                        autoFocus
                       />
-                      <button className="btn" disabled={busy} onClick={() => withFeedback('LISTED', () => toggleForSale(cheki, price ? Number(price) : undefined))}>
-                        SELL
-                      </button>
+                      <div className="row" style={{ gap: 8 }}>
+                        <button className="btn ghost" style={{ flex: 1 }} disabled={busy} onClick={() => setListing(false)}>BACK</button>
+                        <button className="btn" style={{ flex: 1 }} disabled={busy} onClick={() => withFeedback('LISTED', () => toggleForSale(cheki, price ? Number(price) : undefined))}>
+                          LIST
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
