@@ -5,7 +5,7 @@ import { pushToast } from './toast';
 import { useAuth } from './auth';
 import { useDataVersion } from './store';
 import { CHEKI_FALLBACK } from './chekiArt';
-import { POINTS, STARTER_DESIGNS, designPrice, utcDay } from './designs';
+import { POINTS, STARTER_DESIGNS, designPrice } from './designs';
 import { MAX_HIGHLIGHTS } from '../types';
 import type {
   Cheki,
