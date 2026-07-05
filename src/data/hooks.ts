@@ -206,6 +206,35 @@ export async function updateProfile(userId: string, patch: Partial<Profile>): Pr
   bump();
 }
 
+export async function updateUsername(userId: string, username: string): Promise<void> {
+  const clean = username.trim();
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(clean)) {
+    const msg = 'Usernames are 3-20 characters: letters, numbers, underscores only';
+    pushToast(msg);
+    throw new Error(msg);
+  }
+  const existing = await run(
+    supabase.from('profiles').select('id').ilike('username', clean).neq('id', userId).maybeSingle(),
+  );
+  if (existing) {
+    const msg = 'That username is already taken';
+    pushToast(msg);
+    throw new Error(msg);
+  }
+  const { data, error } = await supabase.from('profiles').update({ username: clean }).eq('id', userId).select();
+  if (error) {
+    const msg = error.message.toLowerCase().includes('duplicate') ? 'That username is already taken' : error.message;
+    pushToast(msg);
+    throw new Error(msg);
+  }
+  if (!data || data.length === 0) {
+    const msg = 'Save was blocked — run the latest SQL migration in Supabase.';
+    pushToast(msg);
+    throw new Error(msg);
+  }
+  bump();
+}
+
 export async function setProfileAvatar(userId: string, path: string): Promise<void> {
   await writeChecked(supabase.from('profiles').update({ avatar_path: path }).eq('id', userId));
   bump();

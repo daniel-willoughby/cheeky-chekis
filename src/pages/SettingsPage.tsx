@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import { BackHeader } from '../components/BackHeader';
 import { useSettings, textScalePercent, SCALE_STEP_COUNT } from '../data/settings';
+import { useProfile, updateUsername } from '../data/hooks';
+import { useAuth } from '../data/auth';
+import { pushToast } from '../data/toast';
 import './common.css';
 import './SettingsPage.css';
 
@@ -9,12 +13,64 @@ export function SettingsPage() {
   const scaleIndex = useSettings((s) => s.scaleIndex);
   const biggerText = useSettings((s) => s.biggerText);
   const smallerText = useSettings((s) => s.smallerText);
+  const { userId } = useAuth();
+  const profile = useProfile();
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [usernameDraft, setUsernameDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  function startEditUsername() {
+    setUsernameDraft(profile?.username ?? '');
+    setEditingUsername(true);
+  }
+
+  async function saveUsername() {
+    if (!userId) return;
+    setSaving(true);
+    try {
+      await updateUsername(userId, usernameDraft);
+      pushToast('Username saved', 'ok');
+      setEditingUsername(false);
+    } catch {
+      // error toast already shown; keep the form open so nothing is lost
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="screen">
       <BackHeader title="Settings" />
 
       <img src={`${import.meta.env.BASE_URL}icons/settings.png`} alt="" className="settings-logo" />
+
+      <div className="section-label">ACCOUNT</div>
+
+      <div className="settings-row pixel-box">
+        <div className="settings-row__label">USERNAME</div>
+        {editingUsername ? (
+          <div style={{ width: '100%' }}>
+            <input
+              className="pixel-select"
+              style={{ width: '100%' }}
+              maxLength={20}
+              value={usernameDraft}
+              onChange={(e) => setUsernameDraft(e.target.value)}
+              placeholder="username"
+              autoFocus
+            />
+            <div className="row" style={{ gap: 8, marginTop: 8 }}>
+              <button className="btn ghost" style={{ flex: 1 }} onClick={() => setEditingUsername(false)}>CANCEL</button>
+              <button className="btn" style={{ flex: 1 }} disabled={saving || !usernameDraft.trim()} onClick={saveUsername}>SAVE</button>
+            </div>
+          </div>
+        ) : (
+          <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+            <span className="body-text">@{profile?.username}</span>
+            <button className="chip purple" onClick={startEditUsername}>EDIT</button>
+          </div>
+        )}
+      </div>
 
       <div className="section-label">ACCESSIBILITY</div>
 

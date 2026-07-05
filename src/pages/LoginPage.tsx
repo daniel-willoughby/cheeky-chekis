@@ -49,7 +49,7 @@ export function LoginPage() {
             />
             {error && <p className="body-text login-card__error">{error}</p>}
             <button className="btn" style={{ width: '100%', marginTop: 14 }} disabled={sending}>
-              {sending ? 'SENDING...' : 'SEND LOGIN LINK'}
+              {sending ? 'SENDING...' : 'SEND MAGIC LINK'}
             </button>
           </form>
         )}
