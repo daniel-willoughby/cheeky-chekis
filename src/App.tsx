@@ -17,7 +17,7 @@ import { LoginPage } from './pages/LoginPage';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { Toasts } from './components/Toasts';
 import { useAuth } from './data/auth';
-import { claimDailyBonus } from './data/hooks';
+import { claimDailyBonus, ensureProfile } from './data/hooks';
 import { useSettings, textScalePercent } from './data/settings';
 
 export default function App() {
@@ -26,7 +26,7 @@ export default function App() {
   const scaleIndex = useSettings((s) => s.scaleIndex);
 
   useEffect(() => {
-    if (userId) claimDailyBonus(userId);
+    if (userId) ensureProfile(userId).then(() => claimDailyBonus(userId));
   }, [userId]);
 
   useEffect(() => {

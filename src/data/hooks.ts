@@ -259,6 +259,40 @@ export async function toggleHighlight(userId: string, maidId: string): Promise<v
   bump();
 }
 
+// Safety net: make sure a signed-in user actually has a profile row (+ starter
+// binders). The handle_new_user trigger normally does this, but it's wrapped to
+// never block signup — so if it ever skips the work, we finish provisioning
+// here on first load using the row-level insert policies (id/owner = auth.uid).
+const PROFILE_PALETTE = ['#ff8fc7', '#9b6cff', '#5b8def', '#5fd0a0', '#ffd35b'];
+
+export async function ensureProfile(userId: string): Promise<void> {
+  const existing = await run(supabase.from('profiles').select('id').eq('id', userId).maybeSingle());
+  if (existing) return;
+
+  const { data: userData } = await supabase.auth.getUser();
+  const email = userData.user?.email ?? '';
+  const base = (email.split('@')[0] || 'cheeky').slice(0, 20) || 'cheeky';
+
+  // dedupe the username against existing profiles
+  let candidate = base;
+  for (let n = 1; n < 50; n++) {
+    const clash = await run(supabase.from('profiles').select('id').eq('username', candidate).maybeSingle());
+    if (!clash) break;
+    candidate = `${base}${n}`;
+  }
+
+  const color = PROFILE_PALETTE[Math.floor(Math.random() * PROFILE_PALETTE.length)];
+  await writeChecked(
+    supabase.from('profiles').insert({ id: userId, username: candidate, name: base, color }),
+  );
+  // starter binders — best effort, don't fail the login if they error
+  await supabase.from('binders').insert([
+    { owner_id: userId, name: 'Cheki binder', design: 'classic' },
+    { owner_id: userId, name: SETTLEMENTS_BINDER_NAME, design: 'classic' },
+  ]);
+  bump();
+}
+
 // On login: award the daily +2 bonus (once per UTC day, guarded by
 // last_login_at) and backfill starter designs for older accounts.
 export async function claimDailyBonus(userId: string): Promise<void> {

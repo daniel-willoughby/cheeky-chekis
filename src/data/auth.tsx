@@ -31,12 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    return { error: error?.message ?? null };
+    return { error: error ? (error.message || 'Could not log in. Please try again.') : null };
   }
 
   async function signUp(email: string, password: string) {
     const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
-    if (error) return { error: error.message, needsConfirm: false };
+    if (error) return { error: error.message || 'Could not create your account. Please try again.', needsConfirm: false };
     // With email confirmation disabled, signUp returns a live session and the
     // user is logged straight in. With it enabled, there's a user but no
     // session, so we ask them to confirm by email.
