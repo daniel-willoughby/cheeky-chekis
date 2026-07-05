@@ -108,8 +108,7 @@ export function UploadPage() {
           <img src={preview} alt="preview" className="upload-drop__img" />
         ) : (
           <div className="upload-drop__hint">
-            <div style={{ fontSize: 44 }}>📸</div>
-            <div className="body-text" style={{ fontSize: 20 }}>Tap to add + crop a photo</div>
+            <div className="body-text" style={{ fontSize: 20 }}>Your cheki goes here :3</div>
           </div>
         )}
       </button>

@@ -26,11 +26,14 @@ create policy "users can update their own profile"
 create policy "users can insert their own profile"
   on profiles for insert to authenticated with check (id = auth.uid());
 
--- auto-create a profile row when someone signs up
+-- auto-create a profile row when someone signs up.
+-- Anything that raises here rolls back the auth.users insert ("Database error
+-- saving new user"), so the profile row is the only critical step — starter
+-- binders are created in a guarded block that can never block signup.
 create or replace function handle_new_user()
 returns trigger as $$
 declare
-  base_username text := split_part(new.email, '@', 1);
+  base_username text := split_part(coalesce(new.email, 'cheeky'), '@', 1);
   candidate text := base_username;
   n int := 0;
   palette text[] := array['#ff8fc7', '#9b6cff', '#5b8def', '#5fd0a0', '#ffd35b'];
@@ -44,9 +47,13 @@ begin
   -- starter binders: one for regular chekis, one reserved for settlements
   -- (the app hides 'Cheki Settlements' from binder pickers and fills it
   -- automatically when settlement photos are attached to a cheki)
-  insert into binders (owner_id, name, design) values
-    (new.id, 'Cheki binder', 'classic'),
-    (new.id, 'Cheki Settlements', 'classic');
+  begin
+    insert into binders (owner_id, name, design) values
+      (new.id, 'Cheki binder', 'classic'),
+      (new.id, 'Cheki Settlements', 'classic');
+  exception when others then
+    raise warning 'handle_new_user: starter binders skipped for %: %', new.id, sqlerrm;
+  end;
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;

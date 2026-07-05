@@ -5,7 +5,7 @@ import { pushToast } from './toast';
 import { useAuth } from './auth';
 import { useDataVersion } from './store';
 import { CHEKI_FALLBACK } from './chekiArt';
-import { POINTS, STARTER_DESIGNS, designPrice } from './designs';
+import { POINTS, STARTER_DESIGNS, designPrice, utcDay } from './designs';
 import { MAX_HIGHLIGHTS } from '../types';
 import type {
   Cheki,
@@ -259,12 +259,23 @@ export async function toggleHighlight(userId: string, maidId: string): Promise<v
   bump();
 }
 
-// Backfill owned designs on login. Cheki Mons are only earned by selling a
-// cheki, so there's no daily login bonus.
+// On login: award the daily +2 bonus (once per UTC day, guarded by
+// last_login_at) and backfill starter designs for older accounts.
 export async function claimDailyBonus(userId: string): Promise<void> {
-  const row = await run(supabase.from('profiles').select('owned_designs').eq('id', userId).single());
+  const row = await run(
+    supabase.from('profiles').select('owned_designs, points, last_login_at').eq('id', userId).single(),
+  );
+  const today = utcDay();
+  const patch: Row = {};
+  if (row.last_login_at !== today) {
+    patch.points = (row.points ?? 0) + POINTS.dailyLogin;
+    patch.last_login_at = today;
+  }
   if (!row.owned_designs || row.owned_designs.length === 0) {
-    await writeChecked(supabase.from('profiles').update({ owned_designs: STARTER_DESIGNS }).eq('id', userId));
+    patch.owned_designs = STARTER_DESIGNS;
+  }
+  if (Object.keys(patch).length > 0) {
+    await writeChecked(supabase.from('profiles').update(patch).eq('id', userId));
     bump();
   }
 }
@@ -497,7 +508,7 @@ export async function addCheki(
   if (input.binderId) {
     await run(supabase.from('binder_chekis').insert({ binder_id: input.binderId, cheki_id: row.id }));
   }
-  // Cheki Mons are only earned by selling a cheki, so uploading awards none.
+  await awardPoints(userId, POINTS.upload);
   bump();
   return row.id;
 }
