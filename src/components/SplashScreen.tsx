@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import './SplashScreen.css';
 
 const MESSAGE = 'Are you ready to be cheeky?';
-const SHOW_MS = 1500;
+const SHOW_MS = 2000;
 const FADE_MS = 350;
 
 // Full-screen splash shown once per page load (mounted in main.tsx, so it
