@@ -44,3 +44,10 @@
   border: 3px solid var(--ink);
   padding: 14px;
 }
+
+.login-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 14px;
+}

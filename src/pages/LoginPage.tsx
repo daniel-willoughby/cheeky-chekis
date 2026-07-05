@@ -4,21 +4,39 @@ import './common.css';
 import './LoginPage.css';
 
 export function LoginPage() {
-  const { signInWithEmail } = useAuth();
+  const { signIn, signUp } = useAuth();
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
+  const [confirmMsg, setConfirmMsg] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
-    setSending(true);
+    if (!email.trim() || !password) return;
+    if (mode === 'signup' && password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    setBusy(true);
     setError(null);
-    const { error } = await signInWithEmail(email.trim());
-    setSending(false);
-    if (error) setError(error);
-    else setSent(true);
+    if (mode === 'login') {
+      const { error } = await signIn(email, password);
+      if (error) setError(error);
+    } else {
+      const { error, needsConfirm } = await signUp(email, password);
+      if (error) setError(error);
+      else if (needsConfirm) setConfirmMsg(true);
+      // otherwise the auth state flips to a session and we're logged straight in
+    }
+    setBusy(false);
+  }
+
+  function switchMode(next: 'login' | 'signup') {
+    setMode(next);
+    setError(null);
+    setConfirmMsg(false);
   }
 
   return (
@@ -30,28 +48,59 @@ export function LoginPage() {
           Welcome ૮ ˶ᵔ ᵕ ᵔ˶ ა Share your cheki magic with your cheeky friends!
         </p>
 
-        {sent ? (
+        {confirmMsg ? (
           <div className="login-card__sent">
             <p className="body-text">
-              Check <b>{email}</b> for a login link — tap it to sign in.
+              Almost there! Check <b>{email}</b> to confirm your account, then come back and log in.
             </p>
+            <button className="btn ghost" style={{ width: '100%', marginTop: 12 }} onClick={() => switchMode('login')}>
+              BACK TO LOG IN
+            </button>
           </div>
         ) : (
-          <form onSubmit={submit}>
-            <input
-              className="pixel-select"
-              style={{ width: '100%' }}
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoFocus
-            />
-            {error && <p className="body-text login-card__error">{error}</p>}
-            <button className="btn" style={{ width: '100%', marginTop: 14 }} disabled={sending}>
-              {sending ? 'SENDING...' : 'SEND MAGIC LINK'}
-            </button>
-          </form>
+          <>
+            <div className="login-tabs">
+              <button
+                type="button"
+                className={`chip ${mode === 'login' ? 'purple' : ''}`}
+                onClick={() => switchMode('login')}
+              >
+                LOG IN
+              </button>
+              <button
+                type="button"
+                className={`chip ${mode === 'signup' ? 'purple' : ''}`}
+                onClick={() => switchMode('signup')}
+              >
+                SIGN UP
+              </button>
+            </div>
+            <form onSubmit={submit}>
+              <input
+                className="pixel-select"
+                style={{ width: '100%' }}
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoFocus
+              />
+              <input
+                className="pixel-select"
+                style={{ width: '100%', marginTop: 10 }}
+                type="password"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {error && <p className="body-text login-card__error">{error}</p>}
+              <button className="btn" style={{ width: '100%', marginTop: 14 }} disabled={busy}>
+                {busy ? 'PLEASE WAIT...' : mode === 'login' ? 'LOG IN' : 'CREATE ACCOUNT'}
+              </button>
+            </form>
+          </>
         )}
       </div>
     </div>

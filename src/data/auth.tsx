@@ -6,7 +6,8 @@ interface AuthState {
   session: Session | null;
   userId: string | null;
   loading: boolean;
-  signInWithEmail: (email: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirm: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -28,13 +29,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  async function signInWithEmail(email: string) {
-    const redirectTo = window.location.origin + import.meta.env.BASE_URL;
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: redirectTo },
-    });
+  async function signIn(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     return { error: error?.message ?? null };
+  }
+
+  async function signUp(email: string, password: string) {
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+    if (error) return { error: error.message, needsConfirm: false };
+    // With email confirmation disabled, signUp returns a live session and the
+    // user is logged straight in. With it enabled, there's a user but no
+    // session, so we ask them to confirm by email.
+    return { error: null, needsConfirm: !data.session };
   }
 
   async function signOut() {
@@ -42,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, userId: session?.user.id ?? null, loading, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ session, userId: session?.user.id ?? null, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
