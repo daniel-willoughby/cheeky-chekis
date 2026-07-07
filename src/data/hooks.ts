@@ -188,8 +188,11 @@ export const useProfile = (): Profile | undefined => {
   const { userId } = useAuth();
   return useQuery(async () => {
     if (!userId) return undefined;
-    const row = await run(supabase.from('profiles').select('*').eq('id', userId).single());
-    return mapProfile(row);
+    // maybeSingle (not single) so a not-yet-provisioned account returns
+    // undefined instead of throwing a "cannot coerce" error while
+    // ensureProfile is still creating the row.
+    const row = await run(supabase.from('profiles').select('*').eq('id', userId).maybeSingle());
+    return row ? mapProfile(row) : undefined;
   }, [userId]);
 };
 
@@ -266,31 +269,43 @@ export async function toggleHighlight(userId: string, maidId: string): Promise<v
 const PROFILE_PALETTE = ['#ff8fc7', '#9b6cff', '#5b8def', '#5fd0a0', '#ffd35b'];
 
 export async function ensureProfile(userId: string): Promise<void> {
-  const existing = await run(supabase.from('profiles').select('id').eq('id', userId).maybeSingle());
-  if (existing) return;
+  try {
+    const existing = await run(supabase.from('profiles').select('id').eq('id', userId).maybeSingle());
 
-  const { data: userData } = await supabase.auth.getUser();
-  const email = userData.user?.email ?? '';
-  const base = (email.split('@')[0] || 'cheeky').slice(0, 20) || 'cheeky';
+    if (!existing) {
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData.user?.email ?? '';
+      const base = (email.split('@')[0] || 'cheeky').slice(0, 20) || 'cheeky';
 
-  // dedupe the username against existing profiles
-  let candidate = base;
-  for (let n = 1; n < 50; n++) {
-    const clash = await run(supabase.from('profiles').select('id').eq('username', candidate).maybeSingle());
-    if (!clash) break;
-    candidate = `${base}${n}`;
+      // dedupe the username against existing profiles
+      let candidate = base;
+      for (let n = 1; n < 50; n++) {
+        const clash = await run(supabase.from('profiles').select('id').eq('username', candidate).maybeSingle());
+        if (!clash) break;
+        candidate = `${base}${n}`;
+      }
+
+      const color = PROFILE_PALETTE[Math.floor(Math.random() * PROFILE_PALETTE.length)];
+      await writeChecked(
+        supabase.from('profiles').insert({ id: userId, username: candidate, name: base, color }),
+      );
+      bump();
+    }
+
+    // Backfill starter binders for any account that has none (the trigger may
+    // have created the profile but skipped the binders, or vice versa).
+    const binders = await run(supabase.from('binders').select('id').eq('owner_id', userId).limit(1));
+    if (!binders || binders.length === 0) {
+      await supabase.from('binders').insert([
+        { owner_id: userId, name: 'Cheki binder', design: 'classic' },
+        { owner_id: userId, name: SETTLEMENTS_BINDER_NAME, design: 'classic' },
+      ]);
+      bump();
+    }
+  } catch (e) {
+    // never break the login flow — the error toast (if any) already fired
+    console.error('ensureProfile failed', e);
   }
-
-  const color = PROFILE_PALETTE[Math.floor(Math.random() * PROFILE_PALETTE.length)];
-  await writeChecked(
-    supabase.from('profiles').insert({ id: userId, username: candidate, name: base, color }),
-  );
-  // starter binders — best effort, don't fail the login if they error
-  await supabase.from('binders').insert([
-    { owner_id: userId, name: 'Cheki binder', design: 'classic' },
-    { owner_id: userId, name: SETTLEMENTS_BINDER_NAME, design: 'classic' },
-  ]);
-  bump();
 }
 
 // On login: award the daily +2 bonus (once per UTC day, guarded by
