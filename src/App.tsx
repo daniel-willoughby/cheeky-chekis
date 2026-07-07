@@ -14,6 +14,7 @@ import { DictionaryPage } from './pages/DictionaryPage';
 import { ShopPage } from './pages/ShopPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { Toasts } from './components/Toasts';
 import { useAuth } from './data/auth';
@@ -21,7 +22,7 @@ import { claimDailyBonus, ensureProfile } from './data/hooks';
 import { useSettings, textScalePercent } from './data/settings';
 
 export default function App() {
-  const { session, userId, loading } = useAuth();
+  const { session, userId, loading, recovering } = useAuth();
   const font = useSettings((s) => s.font);
   const scaleIndex = useSettings((s) => s.scaleIndex);
 
@@ -35,6 +36,7 @@ export default function App() {
   }, [font, scaleIndex]);
 
   if (loading) return null;
+  if (recovering) return <ResetPasswordPage />;
   if (!session || !userId) return <LoginPage />;
 
   return (

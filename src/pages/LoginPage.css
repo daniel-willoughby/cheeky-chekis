@@ -51,3 +51,14 @@
   justify-content: center;
   margin-bottom: 14px;
 }
+
+.login-card__forgot {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-top: 12px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--purple-deep);
+  text-decoration: underline;
+}
