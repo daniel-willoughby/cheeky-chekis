@@ -266,8 +266,8 @@ export async function toggleHighlight(userId: string, maidId: string): Promise<v
 // binders). The handle_new_user trigger normally does this, but it's wrapped to
 // never block signup — so if it ever skips the work, we finish provisioning
 // here on first load using the row-level insert policies (id/owner = auth.uid).
-const PROFILE_PALETTE = ['#ff8fc7', '#9b6cff', '#5b8def', '#5fd0a0', '#ffd35b'];
-
+// We insert only the required columns (id/username/name); everything else has a
+// DB default, which keeps this robust against schema drift.
 export async function ensureProfile(userId: string): Promise<void> {
   try {
     const existing = await run(supabase.from('profiles').select('id').eq('id', userId).maybeSingle());
@@ -285,9 +285,8 @@ export async function ensureProfile(userId: string): Promise<void> {
         candidate = `${base}${n}`;
       }
 
-      const color = PROFILE_PALETTE[Math.floor(Math.random() * PROFILE_PALETTE.length)];
       await writeChecked(
-        supabase.from('profiles').insert({ id: userId, username: candidate, name: base, color }),
+        supabase.from('profiles').insert({ id: userId, username: candidate, name: base }),
       );
       bump();
     }

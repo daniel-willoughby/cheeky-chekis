@@ -37,14 +37,15 @@ declare
   base_username text := split_part(coalesce(new.email, 'cheeky'), '@', 1);
   candidate text := base_username;
   n int := 0;
-  palette text[] := array['#ff8fc7', '#9b6cff', '#5b8def', '#5fd0a0', '#ffd35b'];
 begin
   while exists (select 1 from profiles where username = candidate) loop
     n := n + 1;
     candidate := base_username || n::text;
   end loop;
-  insert into profiles (id, username, name, color)
-  values (new.id, candidate, base_username, palette[1 + (abs(hashtext(new.id::text)) % 5)]);
+  -- insert only the required columns; the rest have DB defaults. (Do not add
+  -- optional columns like 'color' here — the live table may not have them.)
+  insert into profiles (id, username, name)
+  values (new.id, candidate, base_username);
   -- starter binders: one for regular chekis, one reserved for settlements
   -- (the app hides 'Cheki Settlements' from binder pickers and fills it
   -- automatically when settlement photos are attached to a cheki)
