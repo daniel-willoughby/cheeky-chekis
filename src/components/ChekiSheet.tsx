@@ -249,7 +249,7 @@ export function ChekiSheet({
                     className="btn ghost"
                     style={{ width: '100%', marginTop: 8 }}
                     disabled={busy}
-                    onClick={async () => { setBusy(true); try { await cancelChekiTransfer(cheki.id); } finally { setBusy(false); } }}
+                    onClick={() => withFeedback('REQUEST CANCELLED', () => cancelChekiTransfer(cheki.id))}
                   >
                     {busy ? '...' : 'CANCEL REQUEST'}
                   </button>
