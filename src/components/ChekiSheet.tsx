@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import type { Cheki, Maid, Cafe, ChekiType } from '../types';
+import type { Cheki, Maid, Cafe, ChekiType, ChekiStatus } from '../types';
 import { MULTI_MAID_TYPES } from '../types';
 import { ChekiImage } from './ChekiImage';
 import {
@@ -67,6 +67,7 @@ export function ChekiSheet({
   const [draftType, setDraftType] = useState<ChekiType>(cheki.type);
   const [draftMaidIds, setDraftMaidIds] = useState<string[]>(cheki.maidIds);
   const [draftDate, setDraftDate] = useState(cheki.date ?? '');
+  const [draftStatus, setDraftStatus] = useState<ChekiStatus>(cheki.status);
   const [draftBinderId, setDraftBinderId] = useState('');
 
   // Run a mutation, show a grey confirmation, then close.
@@ -85,6 +86,7 @@ export function ChekiSheet({
     setDraftType(cheki.type);
     setDraftMaidIds(cheki.maidIds);
     setDraftDate(cheki.date ?? '');
+    setDraftStatus(cheki.status);
     setDraftBinderId(currentBinderId ?? '');
     setEditing(true);
   }
@@ -101,7 +103,7 @@ export function ChekiSheet({
     if (draftMaidIds.length === 0) return;
     setBusy(true);
     try {
-      await updateCheki(cheki.id, { type: draftType, maidIds: draftMaidIds, date: draftDate || undefined });
+      await updateCheki(cheki.id, { type: draftType, maidIds: draftMaidIds, date: draftDate || undefined, status: draftStatus });
       await setChekiBinder(cheki.id, draftBinderId || null);
       setEditing(false);
     } catch {
@@ -168,6 +170,21 @@ export function ChekiSheet({
                 value={draftDate}
                 onChange={(e) => setDraftDate(e.target.value)}
               />
+
+              <div className="row wrap" style={{ gap: 6, marginTop: 8 }}>
+                <button
+                  className={`chip ${draftStatus === 'on-hand' ? 'purple' : ''}`}
+                  onClick={() => setDraftStatus('on-hand')}
+                >
+                  ON HAND
+                </button>
+                <button
+                  className={`chip ${draftStatus === 'on-the-way' ? 'blue' : ''}`}
+                  onClick={() => setDraftStatus('on-the-way')}
+                >
+                  ON THE WAY
+                </button>
+              </div>
 
               <select
                 className="pixel-select"

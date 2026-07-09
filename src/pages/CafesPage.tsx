@@ -13,6 +13,13 @@ export function CafesPage() {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ name: '', district: '', manager: '', vibe: '', chekiPrice: '' });
   const [saving, setSaving] = useState(false);
+  const [maidSearch, setMaidSearch] = useState('');
+
+  const cafeName = new Map((cafes ?? []).map((c) => [c.id, c.name]));
+  const q = maidSearch.trim().toLowerCase();
+  const maidResults = q
+    ? (maids ?? []).filter((m) => m.name.toLowerCase().includes(q))
+    : [];
 
   async function save() {
     if (!draft.name.trim()) return;
@@ -36,7 +43,37 @@ export function CafesPage() {
         <h1 className="screen-title" style={{ marginBottom: 0 }}>Maid Cafes</h1>
         <button className="chip purple" onClick={() => navigate('/dictionary')}>📖 DICTIONARY</button>
       </div>
-      <div style={{ display: 'grid', gap: 14, marginTop: 14 }}>
+
+      <input
+        className="pixel-select"
+        style={{ width: '100%', marginTop: 14 }}
+        placeholder="Search maids"
+        value={maidSearch}
+        onChange={(e) => setMaidSearch(e.target.value)}
+      />
+
+      {q && (
+        <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+          {maidResults.length === 0 ? (
+            <div className="empty pixel-box">No maids match.</div>
+          ) : (
+            maidResults.map((m) => (
+              <button
+                key={m.id}
+                className="cafe-row pixel-box"
+                onClick={() => navigate(`/maids/${m.id}`)}
+              >
+                <div className="cafe-row__info">
+                  <div className="cafe-row__name">{m.name}</div>
+                  <div className="body-text cafe-row__meta">{cafeName.get(m.cafeId ?? '') ?? 'Unknown cafe'}</div>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+      <div style={{ display: q ? 'none' : 'grid', gap: 14, marginTop: 14 }}>
         {(cafes ?? []).map((cafe) => {
           const count = (maids ?? []).filter((m) => m.cafeId === cafe.id).length;
           return (
@@ -63,7 +100,7 @@ export function CafesPage() {
         })}
       </div>
 
-      {adding ? (
+      {q ? null : adding ? (
         <div className="pixel-box" style={{ padding: 14, marginTop: 16 }}>
           <div className="section-label" style={{ marginTop: 0 }}>NEW CAFE</div>
           <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} placeholder="Cafe name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} autoFocus />

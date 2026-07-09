@@ -563,12 +563,13 @@ export async function addCheki(
 
 export async function updateCheki(
   chekiId: string,
-  patch: { type?: ChekiType; maidIds?: string[]; date?: string },
+  patch: { type?: ChekiType; maidIds?: string[]; date?: string; status?: ChekiStatus },
 ): Promise<void> {
   const dbPatch: Row = {};
   if (patch.type !== undefined) dbPatch.type = patch.type;
   if (patch.maidIds !== undefined) dbPatch.maid_ids = patch.maidIds;
   if (patch.date !== undefined) dbPatch.date = patch.date;
+  if (patch.status !== undefined) dbPatch.status = patch.status;
   await writeChecked(supabase.from('chekis').update(dbPatch).eq('id', chekiId));
   bump();
 }

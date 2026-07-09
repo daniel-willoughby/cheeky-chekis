@@ -38,6 +38,7 @@ export function ProfilePage() {
   const [filterType, setFilterType] = useState<ChekiType | 'all'>('all');
   const [filterMaid, setFilterMaid] = useState('');
   const [filterCafe, setFilterCafe] = useState('');
+  const [sortDir, setSortDir] = useState<'newest' | 'oldest'>('newest');
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -72,19 +73,29 @@ export function ProfilePage() {
   const ownCafeIds = new Set((chekis ?? []).map((c) => c.cafeId).filter(Boolean));
   const filteredChekis = useMemo(
     () =>
-      (chekis ?? []).filter(
-        (c) =>
-          (filterType === 'all' || c.type === filterType) &&
-          (!filterMaid || c.maidIds.includes(filterMaid)) &&
-          (!filterCafe || c.cafeId === filterCafe),
-      ),
-    [chekis, filterType, filterMaid, filterCafe],
+      (chekis ?? [])
+        .filter(
+          (c) =>
+            (filterType === 'all' || c.type === filterType) &&
+            (!filterMaid || c.maidIds.includes(filterMaid)) &&
+            (!filterCafe || c.cafeId === filterCafe),
+        )
+        // sort by date; undated chekis sink to the bottom either way
+        .sort((a, b) => {
+          const da = a.date ?? '';
+          const db = b.date ?? '';
+          if (!da && !db) return 0;
+          if (!da) return 1;
+          if (!db) return -1;
+          return sortDir === 'newest' ? db.localeCompare(da) : da.localeCompare(db);
+        }),
+    [chekis, filterType, filterMaid, filterCafe, sortDir],
   );
   const pageCount = Math.max(1, Math.ceil(filteredChekis.length / CHEKIS_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
   const pagedChekis = filteredChekis.slice(currentPage * CHEKIS_PAGE_SIZE, (currentPage + 1) * CHEKIS_PAGE_SIZE);
 
-  useEffect(() => setPage(0), [filterType, filterMaid, filterCafe]);
+  useEffect(() => setPage(0), [filterType, filterMaid, filterCafe, sortDir]);
 
   function startEdit() {
     setNameDraft(profile?.name ?? '');
@@ -240,6 +251,20 @@ export function ProfilePage() {
               <option value="">All cafes</option>
               {(cafes ?? []).filter((c) => ownCafeIds.has(c.id)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+          </div>
+          <div className="row" style={{ gap: 8, marginTop: 10 }}>
+            <button
+              className={`chip ${sortDir === 'newest' ? 'purple' : ''}`}
+              onClick={() => setSortDir('newest')}
+            >
+              NEWEST
+            </button>
+            <button
+              className={`chip ${sortDir === 'oldest' ? 'purple' : ''}`}
+              onClick={() => setSortDir('oldest')}
+            >
+              OLDEST
+            </button>
           </div>
         </>
       )}
