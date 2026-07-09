@@ -84,6 +84,7 @@ export interface PublicProfile {
   avatarUrl?: string;
   bio: string;
   favouriteMaidIds: string[];
+  isAdmin: boolean;
 }
 
 export type FriendshipStatus = 'pending' | 'accepted';
@@ -106,6 +107,7 @@ export interface Profile {
   favouriteMaidIds: string[]; // up to 3 highlighted maids
   points: number;             // Cheki Points balance
   ownedDesigns: BinderDesign[];
+  isAdmin: boolean;           // can add/edit/delete cafes & maids
   lastLoginAt?: string;       // UTC date (YYYY-MM-DD) of last daily bonus
   lastSeenFriendsAt?: string; // ISO timestamp, drives the Friends tab badge
 }

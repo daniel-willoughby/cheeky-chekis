@@ -12,10 +12,17 @@ create table if not exists profiles (
   favourite_maid_ids uuid[] not null default '{}',
   points int not null default 0,
   owned_designs text[] not null default '{classic}',
+  is_admin boolean not null default false,
   last_login_at date,
   last_seen_friends_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- is this user an admin? (only admins may add/edit/delete cafes & maids)
+create or replace function is_admin(uid uuid)
+returns boolean as $$
+  select coalesce((select is_admin from profiles where id = uid), false);
+$$ language sql security definer stable set search_path = public;
 
 alter table profiles enable row level security;
 
@@ -94,15 +101,21 @@ alter table maids enable row level security;
 
 create policy "cafes are readable by any signed-in user"
   on cafes for select to authenticated using (true);
-create policy "any signed-in user can edit cafe info"
-  on cafes for update to authenticated using (true);
-create policy "any signed-in user can delete a cafe"
-  on cafes for delete to authenticated using (true);
+create policy "admins can add a cafe"
+  on cafes for insert to authenticated with check (is_admin(auth.uid()));
+create policy "admins can edit cafe info"
+  on cafes for update to authenticated using (is_admin(auth.uid()));
+create policy "admins can delete a cafe"
+  on cafes for delete to authenticated using (is_admin(auth.uid()));
 
 create policy "maids are readable by any signed-in user"
   on maids for select to authenticated using (true);
-create policy "any signed-in user can delete a maid"
-  on maids for delete to authenticated using (true);
+create policy "admins can add a maid"
+  on maids for insert to authenticated with check (is_admin(auth.uid()));
+create policy "admins can edit a maid"
+  on maids for update to authenticated using (is_admin(auth.uid()));
+create policy "admins can delete a maid"
+  on maids for delete to authenticated using (is_admin(auth.uid()));
 
 -- ============ friendships ============
 create table if not exists friendships (

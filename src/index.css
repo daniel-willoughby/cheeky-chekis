@@ -160,6 +160,18 @@ a { color: var(--purple-deep); }
 
 .chip { cursor: pointer; }
 
+/* pink "Admin" badge next to admin users' names */
+.admin-badge {
+  display: inline-block;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1;
+  padding: 4px 7px;
+  color: #fff;
+  background: var(--pink-deep, #ff5fa2);
+  border: 2px solid var(--ink);
+}
+
 .pixel-select {
   font-family: var(--font-body);
   font-size: 1.25rem;

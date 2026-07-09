@@ -125,7 +125,10 @@ export function ProfilePage() {
         </div>
         <div className="profile-hero__info">
           <div className="row wrap" style={{ justifyContent: 'space-between' }}>
-            <h1 className="profile-hero__name">{profile?.name ?? 'You'}</h1>
+            <div className="row wrap" style={{ gap: 8, alignItems: 'center' }}>
+              <h1 className="profile-hero__name">{profile?.name ?? 'You'}</h1>
+              {profile?.isAdmin && <span className="admin-badge">ADMIN</span>}
+            </div>
             <div className="row" style={{ gap: 6, flexShrink: 0 }}>
               <button className="chip profile-hero__settings-btn" onClick={() => navigate('/settings')}>
                 <img src={`${import.meta.env.BASE_URL}icons/settings.png`} alt="Settings" />

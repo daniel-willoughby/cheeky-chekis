@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCafes, useMaids, createCafe, formatKRW } from '../data/hooks';
+import { useCafes, useMaids, createCafe, formatKRW, useProfile } from '../data/hooks';
 import { CafeBadge } from '../components/CafeBadge';
 import './common.css';
 import './CafesPage.css';
@@ -9,6 +9,7 @@ export function CafesPage() {
   const navigate = useNavigate();
   const cafes = useCafes();
   const maids = useMaids();
+  const isAdmin = useProfile()?.isAdmin ?? false;
 
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ name: '', district: '', manager: '', vibe: '', chekiPrice: '' });
@@ -100,7 +101,7 @@ export function CafesPage() {
         })}
       </div>
 
-      {q ? null : adding ? (
+      {q || !isAdmin ? null : adding ? (
         <div className="pixel-box" style={{ padding: 14, marginTop: 16 }}>
           <div className="section-label" style={{ marginTop: 0 }}>NEW CAFE</div>
           <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} placeholder="Cafe name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} autoFocus />

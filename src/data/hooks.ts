@@ -98,6 +98,7 @@ function mapProfile(row: Row): Profile {
     favouriteMaidIds: row.favourite_maid_ids ?? [],
     points: row.points,
     ownedDesigns: row.owned_designs ?? [],
+    isAdmin: row.is_admin ?? false,
     lastLoginAt: row.last_login_at ?? undefined,
     lastSeenFriendsAt: row.last_seen_friends_at ?? undefined,
   };
@@ -113,6 +114,7 @@ function mapPublicProfile(row: Row): PublicProfile {
     avatarUrl: imageUrl(row.avatar_path),
     bio: row.bio,
     favouriteMaidIds: row.favourite_maid_ids ?? [],
+    isAdmin: row.is_admin ?? false,
   };
 }
 

@@ -72,7 +72,10 @@ export function FriendProfilePage() {
           {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="friend-hero__avatar-img" /> : <img src={`${import.meta.env.BASE_URL}icons/mystery.png`} alt="" className="avatar-mystery" />}
         </div>
         <div>
-          <div className="friend-hero__name">{friend.name}</div>
+          <div className="row wrap" style={{ gap: 8, alignItems: 'center' }}>
+            <div className="friend-hero__name">{friend.name}</div>
+            {friend.isAdmin && <span className="admin-badge">ADMIN</span>}
+          </div>
           {friend.bio && <p className="body-text friend-hero__bio">{friend.bio}</p>}
           <span className="chip blue">{chekis?.length ?? 0} CHEKIS</span>
         </div>

@@ -25,6 +25,7 @@ export function MaidDetailPage() {
   const [deleting, setDeleting] = useState(false);
 
   if (!maid) return <div className="screen"><BackHeader title="Maid" /></div>;
+  const isAdmin = profile?.isAdmin ?? false;
   const highlights = profile?.favouriteMaidIds ?? [];
   const isHighlighted = highlights.includes(maid.id);
   const full = !isHighlighted && highlights.length >= MAX_HIGHLIGHTS;
@@ -103,7 +104,7 @@ export function MaidDetailPage() {
               >
                 {isHighlighted ? '★ HIGHLIGHTED' : full ? 'HIGHLIGHTS FULL' : 'HIGHLIGHT'}
               </button>
-              <button className="chip purple" onClick={startEdit}>EDIT MAID</button>
+              {isAdmin && <button className="chip purple" onClick={startEdit}>EDIT MAID</button>}
             </>
           )}
         </div>

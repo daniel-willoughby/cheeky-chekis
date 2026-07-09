@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useCafe, useMaidsByCafe, updateCafe, setCafeImage, createMaid, deleteCafe, formatKRW } from '../data/hooks';
+import { useCafe, useMaidsByCafe, updateCafe, setCafeImage, createMaid, deleteCafe, formatKRW, useProfile } from '../data/hooks';
 import { CHEKI_TYPES } from '../data/chekiMeta';
 import type { ChekiType } from '../types';
 import { MaidCard } from '../components/MaidCard';
@@ -15,6 +15,7 @@ export function CafeDetailPage() {
   const navigate = useNavigate();
   const cafe = useCafe(cafeId);
   const maids = useMaidsByCafe(cafeId);
+  const isAdmin = useProfile()?.isAdmin ?? false;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ district: '', manager: '', chekiPrice: '', vibe: '', rules: '' });
   const [typePrices, setTypePrices] = useState<Partial<Record<ChekiType, string>>>({});
@@ -159,7 +160,7 @@ export function CafeDetailPage() {
           <div className="body-text cafe-detail__line"><b>Manager:</b> {cafe.manager}</div>
           <div className="body-text cafe-detail__line"><b>Cheki:</b> {formatKRW(cafe.chekiPrice)}</div>
         </div>
-        <button className="chip purple" onClick={startEdit}>EDIT</button>
+        {isAdmin && <button className="chip purple" onClick={startEdit}>EDIT</button>}
       </div>
 
       {CHEKI_TYPES.some((t) => cafe.typePrices[t] != null) && (
@@ -188,7 +189,7 @@ export function CafeDetailPage() {
         ))}
       </div>
 
-      {addingMaid ? (
+      {!isAdmin ? null : addingMaid ? (
         <div className="pixel-box" style={{ padding: 14, marginTop: 14 }}>
           <div className="section-label" style={{ marginTop: 0 }}>NEW MAID</div>
           <input className="pixel-select" style={{ width: '100%', marginBottom: 8 }} placeholder="Name" value={maidDraft.name} onChange={(e) => setMaidDraft({ ...maidDraft, name: e.target.value })} autoFocus />
