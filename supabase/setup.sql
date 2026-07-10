@@ -451,9 +451,9 @@ alter default privileges in schema public
 -- 8. Data reconciliation (idempotent)
 -- ---------------------------------------------------------------------------
 
--- admins
+-- admins (case-insensitive match, so 'Holakittybel' etc. still count)
 update profiles set is_admin = true
-  where username in ('holakittybel', 'winter', 'sarah', 'd.t.willoughby');
+  where lower(username) in ('holakittybel', 'winter', 'sarah', 'd.t.willoughby');
 
 -- existing single-cafe chekis get their cafe in the cafe_ids array
 update chekis set cafe_ids = array[cafe_id]
