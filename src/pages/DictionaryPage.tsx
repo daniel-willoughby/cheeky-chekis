@@ -4,9 +4,8 @@ import './DictionaryPage.css';
 
 const ENTRIES = [
   { term: 'Cheki', color: 'purple', def: 'A Polaroid picture of maids.' },
-  { term: 'Regular', color: 'blue', def: 'A standard cheki, no special format.' },
   { term: 'Pin', color: 'gold', def: 'A cheki with no decoration.' },
-  { term: '4-cut', color: 'purple', def: 'Photo strip of four poses in one frame.' },
+  { term: '4-cut', color: 'purple', def: '4 pictures of one or more maids in a frame.' },
   { term: 'Homework', color: 'pink', def: 'A cheki with special decoration.' },
   { term: 'Twin', color: 'purple', def: 'A cheki with two maids.' },
   { term: 'Group', color: 'purple', def: 'A cheki with several maids together.' },
