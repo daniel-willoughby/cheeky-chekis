@@ -159,6 +159,7 @@ create table if not exists chekis (
   image_path text,
   maid_ids uuid[] not null default '{}',
   cafe_id uuid references cafes(id) on delete set null,
+  cafe_ids uuid[] not null default '{}',
   date date,
   type text not null,
   status text not null default 'on-hand',

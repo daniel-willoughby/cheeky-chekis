@@ -32,6 +32,7 @@ function mapCheki(row: Row): Cheki {
     imageUrl: chekiPhotoUrl(row.image_path) ?? CHEKI_FALLBACK,
     maidIds: row.maid_ids ?? [],
     cafeId: row.cafe_id ?? undefined,
+    cafeIds: row.cafe_ids ?? (row.cafe_id ? [row.cafe_id] : []),
     date: row.date ?? undefined,
     type: row.type,
     status: row.status,
@@ -521,12 +522,30 @@ export const usePublicProfilesByIds = (ids: string[]): Map<string, PublicProfile
     return new Map(rows.map((r: Row) => [r.id, mapPublicProfile(r)]));
   }, [ids.slice().sort().join(',')]);
 
+// Insert a cheki row. Tolerates a DB that hasn't run the cafe_ids migration
+// yet: if the column is missing, it retries without cafe_ids so uploads keep
+// working in the window between deploy and migration.
+async function insertChekiRow(payload: Row): Promise<Row> {
+  let res = await supabase.from('chekis').insert(payload).select('id').single();
+  if (res.error && /cafe_ids/i.test(res.error.message)) {
+    const fallback = { ...payload };
+    delete fallback.cafe_ids;
+    res = await supabase.from('chekis').insert(fallback).select('id').single();
+  }
+  if (res.error) {
+    pushToast(res.error.message);
+    throw new Error(res.error.message);
+  }
+  return res.data as Row;
+}
+
 export async function addCheki(
   userId: string,
   input: {
     imagePath: string | null;
     maidIds: string[];
     cafeId?: string;
+    cafeIds?: string[];
     date?: string;
     type: ChekiType;
     status: ChekiStatus;
@@ -536,25 +555,23 @@ export async function addCheki(
     binderId?: string;
   },
 ): Promise<string> {
-  const row = await run(
-    supabase
-      .from('chekis')
-      .insert({
-        owner_id: userId,
-        image_path: input.imagePath,
-        maid_ids: input.maidIds,
-        cafe_id: input.cafeId ?? null,
-        date: input.date ?? null,
-        type: input.type,
-        status: input.status,
-        for_sale: input.forSale,
-        sold: false,
-        price: input.price ?? null,
-        notes: input.notes ?? null,
-      })
-      .select('id')
-      .single(),
-  );
+  const cafeIds = input.cafeIds && input.cafeIds.length > 0
+    ? input.cafeIds
+    : input.cafeId ? [input.cafeId] : [];
+  const row = await insertChekiRow({
+    owner_id: userId,
+    image_path: input.imagePath,
+    maid_ids: input.maidIds,
+    cafe_id: input.cafeId ?? cafeIds[0] ?? null,
+    cafe_ids: cafeIds,
+    date: input.date ?? null,
+    type: input.type,
+    status: input.status,
+    for_sale: input.forSale,
+    sold: false,
+    price: input.price ?? null,
+    notes: input.notes ?? null,
+  });
   if (input.binderId) {
     await run(supabase.from('binder_chekis').insert({ binder_id: input.binderId, cheki_id: row.id }));
   }
@@ -811,24 +828,19 @@ export const useSettlementsOf = (chekiId?: string): Cheki[] | undefined =>
 // the settlements binder. No upload points — it's an attachment, not a new cheki.
 export async function createSettlement(userId: string, parent: Cheki, imagePath: string): Promise<string> {
   const binderId = await ensureSettlementsBinder(userId);
-  const row = await run(
-    supabase
-      .from('chekis')
-      .insert({
-        owner_id: userId,
-        image_path: imagePath,
-        maid_ids: parent.maidIds,
-        cafe_id: parent.cafeId ?? null,
-        date: parent.date ?? null,
-        type: parent.type,
-        status: 'on-hand',
-        for_sale: false,
-        sold: false,
-        settlement_of: parent.id,
-      })
-      .select('id')
-      .single(),
-  );
+  const row = await insertChekiRow({
+    owner_id: userId,
+    image_path: imagePath,
+    maid_ids: parent.maidIds,
+    cafe_id: parent.cafeId ?? null,
+    cafe_ids: parent.cafeIds ?? [],
+    date: parent.date ?? null,
+    type: parent.type,
+    status: 'on-hand',
+    for_sale: false,
+    sold: false,
+    settlement_of: parent.id,
+  });
   await run(supabase.from('binder_chekis').insert({ binder_id: binderId, cheki_id: row.id }));
   bump();
   return row.id;

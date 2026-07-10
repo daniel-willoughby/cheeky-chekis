@@ -70,7 +70,7 @@ export function ProfilePage() {
 
   // maids/cafes that actually appear in the collection, for the filter dropdowns
   const ownMaidIds = new Set((chekis ?? []).flatMap((c) => c.maidIds));
-  const ownCafeIds = new Set((chekis ?? []).map((c) => c.cafeId).filter(Boolean));
+  const ownCafeIds = new Set((chekis ?? []).flatMap((c) => (c.cafeIds.length ? c.cafeIds : c.cafeId ? [c.cafeId] : [])));
   const filteredChekis = useMemo(
     () =>
       (chekis ?? [])
@@ -78,7 +78,7 @@ export function ProfilePage() {
           (c) =>
             (filterType === 'all' || c.type === filterType) &&
             (!filterMaid || c.maidIds.includes(filterMaid)) &&
-            (!filterCafe || c.cafeId === filterCafe),
+            (!filterCafe || (c.cafeIds.length ? c.cafeIds.includes(filterCafe) : c.cafeId === filterCafe)),
         )
         // sort by date; undated chekis sink to the bottom either way
         .sort((a, b) => {

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackHeader } from '../components/BackHeader';
 import { CropModal } from '../components/CropModal';
@@ -23,7 +23,8 @@ export function UploadPage() {
   const [blob, setBlob] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string>();
   const [rawSrc, setRawSrc] = useState<string>();     // photo awaiting crop
-  const [cafeId, setCafeId] = useState<string>('');
+  // one or more cafe "slots"; multi-maid chekis can pull maids from several cafes
+  const [cafeSlots, setCafeSlots] = useState<string[]>(['']);
   const [maidIds, setMaidIds] = useState<string[]>([]);
   const [type, setType] = useState<ChekiType>('pin');
   const [status, setStatus] = useState<ChekiStatus>('on-hand');
@@ -35,14 +36,10 @@ export function UploadPage() {
 
   const [maidSearch, setMaidSearch] = useState('');
   const multiMaid = MULTI_MAID_TYPES.includes(type);
-  const cafeMaids = useMemo(
-    () => (maids ?? []).filter((m) => !cafeId || m.cafeId === cafeId),
-    [maids, cafeId],
-  );
-  const shownMaids = useMemo(
-    () => cafeMaids.filter((m) => m.name.toLowerCase().includes(maidSearch.trim().toLowerCase())),
-    [cafeMaids, maidSearch],
-  );
+  const q = maidSearch.trim().toLowerCase();
+  const maidsForCafe = (cid: string) =>
+    (maids ?? []).filter((m) => m.cafeId === cid && (!q || m.name.toLowerCase().includes(q)));
+  const cafeOf = (maidId: string) => maids?.find((m) => m.id === maidId)?.cafeId;
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -61,13 +58,36 @@ export function UploadPage() {
 
   function pickType(t: ChekiType) {
     setType(t);
-    if (!MULTI_MAID_TYPES.includes(t)) setMaidIds((prev) => prev.slice(0, 1));
+    if (!MULTI_MAID_TYPES.includes(t)) {
+      setMaidIds((prev) => prev.slice(0, 1));
+      setCafeSlots((prev) => prev.slice(0, 1)); // single-maid: one cafe only
+    }
+  }
+
+  function setSlotCafe(i: number, cid: string) {
+    const old = cafeSlots[i];
+    setCafeSlots((prev) => prev.map((c, idx) => (idx === i ? cid : c)));
+    if (old && old !== cid) {
+      setMaidIds((prev) => prev.filter((id) => cafeOf(id) !== old));
+    }
+  }
+
+  function addCafeSlot() {
+    setCafeSlots((prev) => [...prev, '']);
+  }
+
+  function removeCafeSlot(i: number) {
+    const cid = cafeSlots[i];
+    if (cid) setMaidIds((prev) => prev.filter((id) => cafeOf(id) !== cid));
+    setCafeSlots((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   async function save() {
     if (!userId) return;
     setSaving(true);
-    const cafe = cafeId || (maidIds[0] ? maids?.find((m) => m.id === maidIds[0])?.cafeId : undefined);
+    // the cafes involved are wherever the chosen maids come from
+    const cafeIds = [...new Set(maidIds.map(cafeOf).filter(Boolean))] as string[];
+    const cafe = cafeIds[0] ?? cafeSlots.find(Boolean);
 
     try {
       let imagePath: string | null = null;
@@ -86,6 +106,7 @@ export function UploadPage() {
         imagePath,
         maidIds,
         cafeId: cafe,
+        cafeIds,
         date,
         type,
         status,
@@ -135,43 +156,55 @@ export function UploadPage() {
         </div>
       </Field>
 
-      <Field label="CAFE">
-        <select className="pixel-select" value={cafeId} onChange={(e) => { setCafeId(e.target.value); setMaidIds([]); }}>
-          <option value="">Choose cafe</option>
-          {(cafes ?? []).map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label={multiMaid ? 'MAIDS (tap to add more)' : 'MAID'}>
-        {!cafeId ? (
-          <span className="body-text" style={{ fontSize: 17 }}>Choose a cafe first.</span>
-        ) : (
-          <>
-            {cafeMaids.length > 6 && (
+      <Field label={multiMaid ? 'CAFES & MAIDS' : 'CAFE & MAID'}>
+        {cafeSlots.map((slot, i) => (
+          <div key={i} style={{ marginBottom: 12 }}>
+            <div className="row" style={{ gap: 8 }}>
+              <select
+                className="pixel-select"
+                style={{ flex: 1 }}
+                value={slot}
+                onChange={(e) => setSlotCafe(i, e.target.value)}
+              >
+                <option value="">Choose cafe</option>
+                {(cafes ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              {cafeSlots.length > 1 && (
+                <button className="chip" onClick={() => removeCafeSlot(i)} aria-label="Remove cafe">✕</button>
+              )}
+            </div>
+            {slot && (maids ?? []).filter((m) => m.cafeId === slot).length > 6 && (
               <input
                 className="pixel-select"
-                style={{ width: '100%', marginBottom: 8 }}
+                style={{ width: '100%', marginTop: 8 }}
                 placeholder="Search maids"
                 value={maidSearch}
                 onChange={(e) => setMaidSearch(e.target.value)}
               />
             )}
-            <div className="row wrap">
-              {shownMaids.map((m) => (
-                <button
-                  key={m.id}
-                  className={`chip chip-pop ${maidIds.includes(m.id) ? 'pink' : ''}`}
-                  onClick={() => toggleMaid(m.id)}
-                >
-                  {maidIds.includes(m.id) ? '✓ ' : ''}{m.name}
-                </button>
-              ))}
-              {cafeMaids.length === 0 && <span className="body-text" style={{ fontSize: 17 }}>No maids yet. Add one on the cafe page.</span>}
-              {cafeMaids.length > 0 && shownMaids.length === 0 && <span className="body-text" style={{ fontSize: 17 }}>No maids match.</span>}
-            </div>
-          </>
+            {slot && (
+              <div className="row wrap" style={{ marginTop: 8 }}>
+                {(maids ?? []).filter((m) => m.cafeId === slot).length === 0 ? (
+                  <span className="body-text" style={{ fontSize: 17 }}>No maids yet. Add one on the cafe page.</span>
+                ) : (
+                  maidsForCafe(slot).map((m) => (
+                    <button
+                      key={m.id}
+                      className={`chip chip-pop ${maidIds.includes(m.id) ? 'pink' : ''}`}
+                      onClick={() => toggleMaid(m.id)}
+                    >
+                      {maidIds.includes(m.id) ? '✓ ' : ''}{m.name}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+        {multiMaid && (
+          <button className="chip purple" onClick={addCafeSlot}>+ CAFE</button>
         )}
       </Field>
 

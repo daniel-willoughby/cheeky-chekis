@@ -12,7 +12,7 @@ import {
   setChekiBinder,
   deleteCheki,
   useChekiBinderId,
-  useMaidsByCafe,
+  useMaids,
   useMyBinders,
   useFriends,
   useChekiLikes,
@@ -51,7 +51,10 @@ export function ChekiSheet({
   const [deleting, setDeleting] = useState(false);
   const mine = cheki.ownerId === userId;
 
-  const cafeMaids = useMaidsByCafe(cheki.cafeId);
+  const allMaids = useMaids();
+  // maids across every cafe this cheki involves (multi-cafe twin/group/4-cut)
+  const editCafeIds = cheki.cafeIds.length ? cheki.cafeIds : cheki.cafeId ? [cheki.cafeId] : [];
+  const cafeMaids = (allMaids ?? []).filter((m) => m.cafeId && editCafeIds.includes(m.cafeId));
   const binders = useMyBinders();
   const currentBinderId = useChekiBinderId(cheki.id);
   const friends = useFriends();
@@ -149,7 +152,7 @@ export function ChekiSheet({
                 ))}
               </div>
 
-              {cheki.cafeId && (
+              {editCafeIds.length > 0 && (
                 <div className="row wrap" style={{ gap: 6, marginTop: 8 }}>
                   {(cafeMaids ?? []).map((m) => (
                     <button

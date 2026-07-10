@@ -9,7 +9,8 @@ export interface Cheki {
   ownerId: string;
   imageUrl?: string;      // public storage URL, or placeholder fallback
   maidIds: string[];      // one or more maids featured
-  cafeId?: string;
+  cafeId?: string;        // primary cafe (for pricing/labels)
+  cafeIds: string[];      // all cafes involved (multi-cafe twin/group/4-cut)
   date?: string;          // ISO date the cheki was taken
   type: ChekiType;
   status: ChekiStatus;
