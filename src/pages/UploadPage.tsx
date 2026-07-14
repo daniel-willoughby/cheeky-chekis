@@ -32,6 +32,7 @@ export function UploadPage() {
   const [forSale, setForSale] = useState(false);
   const [price, setPrice] = useState('');
   const [binderId, setBinderId] = useState('');
+  const [gridCount, setGridCount] = useState('');
   const [saving, setSaving] = useState(false);
 
   const [maidSearch, setMaidSearch] = useState('');
@@ -107,6 +108,7 @@ export function UploadPage() {
         maidIds,
         cafeId: cafe,
         cafeIds,
+        gridCount: type === 'grid' && gridCount ? Number(gridCount) : undefined,
         date,
         type,
         status,
@@ -144,6 +146,19 @@ export function UploadPage() {
           ))}
         </div>
       </Field>
+
+      {type === 'grid' && (
+        <Field label="CHEKIS IN GRID">
+          <input
+            className="pixel-select"
+            style={{ width: 130 }}
+            inputMode="numeric"
+            placeholder="e.g. 6"
+            value={gridCount}
+            onChange={(e) => setGridCount(e.target.value.replace(/\D/g, ''))}
+          />
+        </Field>
+      )}
 
       <Field label="STATUS">
         <div className="row">

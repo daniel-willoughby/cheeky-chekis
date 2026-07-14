@@ -16,7 +16,7 @@ export function MaidCard({
 }) {
   return (
     <button
-      className={`maid-card${compact ? ' maid-card--compact' : ''}${highlighted ? ' maid-card--hl' : ''}${maid.graduated ? ' maid-card--graduated' : ''}`}
+      className={`maid-card${compact ? ' maid-card--compact' : ''}${highlighted ? ' maid-card--hl' : ''}${maid.graduated && !highlighted ? ' maid-card--graduated' : ''}`}
       style={{ ['--accent' as string]: maid.color }}
       onClick={onClick}
     >

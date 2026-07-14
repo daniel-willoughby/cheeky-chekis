@@ -81,7 +81,7 @@ export function FriendsPage() {
             const already = friendIds.has(r.id) || outgoingIds?.has(r.id);
             return (
               <div key={r.id} className="row search-result pixel-box" style={{ padding: 10, justifyContent: 'space-between' }}>
-                <span className="body-text">{r.emoji} @{r.username}</span>
+                <span className="body-text"><img src={`${import.meta.env.BASE_URL}icons/logo.png`} alt="" className="friend-wand" /> @{r.username}</span>
                 <button
                   className={`chip ${already ? '' : 'purple'}`}
                   disabled={already}
@@ -101,7 +101,7 @@ export function FriendsPage() {
           <div style={{ display: 'grid', gap: 8 }}>
             {incoming.map((req) => (
               <div key={req.id} className="row search-result pixel-box" style={{ padding: 10, justifyContent: 'space-between' }}>
-                <span className="body-text">{req.from.emoji} @{req.from.username}</span>
+                <span className="body-text"><img src={`${import.meta.env.BASE_URL}icons/logo.png`} alt="" className="friend-wand" /> @{req.from.username}</span>
                 <div className="row" style={{ gap: 6 }}>
                   <button className="chip purple" onClick={() => acceptFriendRequest(req.id)}>ACCEPT</button>
                   <button className="chip" onClick={() => removeFriendship(req.id)}>DECLINE</button>

@@ -33,6 +33,7 @@ function mapCheki(row: Row): Cheki {
     maidIds: row.maid_ids ?? [],
     cafeId: row.cafe_id ?? undefined,
     cafeIds: row.cafe_ids ?? (row.cafe_id ? [row.cafe_id] : []),
+    gridCount: row.grid_count ?? undefined,
     date: row.date ?? undefined,
     type: row.type,
     status: row.status,
@@ -477,6 +478,70 @@ export async function deleteCafe(cafeId: string): Promise<void> {
   bump();
 }
 
+// ---------- content requests (non-admins request cafes/maids; admins approve) ----------
+
+export type RequestPayload = Record<string, string | number | undefined>;
+
+export interface ContentRequest {
+  id: string;
+  requesterId: string;
+  kind: 'cafe' | 'maid';
+  payload: RequestPayload;
+  createdAt: number;
+}
+
+function mapContentRequest(row: Row): ContentRequest {
+  return {
+    id: row.id,
+    requesterId: row.requester_id,
+    kind: row.kind,
+    payload: row.payload ?? {},
+    createdAt: Date.parse(row.created_at),
+  };
+}
+
+// Admins see every pending request; a non-admin sees only their own (RLS).
+// Tolerates the table not existing yet (before setup.sql is re-run).
+export const usePendingRequests = (): ContentRequest[] | undefined =>
+  useQuery(async () => {
+    const { data, error } = await supabase.from('content_requests').select('*').order('created_at');
+    if (error) return [];
+    return (data as Row[]).map(mapContentRequest);
+  }, []);
+
+export async function createContentRequest(userId: string, kind: 'cafe' | 'maid', payload: RequestPayload): Promise<void> {
+  await run(supabase.from('content_requests').insert({ requester_id: userId, kind, payload }));
+  bump();
+}
+
+export async function dismissRequest(id: string): Promise<void> {
+  await run(supabase.from('content_requests').delete().eq('id', id));
+  bump();
+}
+
+// Approve a request: actually create the cafe/maid (admin RLS applies), then
+// remove the request.
+export async function approveRequest(req: ContentRequest): Promise<void> {
+  const p = req.payload;
+  if (req.kind === 'cafe') {
+    await createCafe({
+      name: String(p.name ?? ''),
+      district: String(p.district ?? ''),
+      manager: String(p.manager ?? ''),
+      vibe: String(p.vibe ?? ''),
+      chekiPrice: Number(p.chekiPrice) || 0,
+    });
+  } else {
+    await createMaid({
+      cafeId: String(p.cafeId ?? ''),
+      name: String(p.name ?? ''),
+      bio: String(p.bio ?? ''),
+    });
+  }
+  await run(supabase.from('content_requests').delete().eq('id', req.id));
+  bump();
+}
+
 // ---------- chekis ----------
 
 export const useChekisByOwner = (ownerId?: string): Cheki[] | undefined =>
@@ -522,14 +587,15 @@ export const usePublicProfilesByIds = (ids: string[]): Map<string, PublicProfile
     return new Map(rows.map((r: Row) => [r.id, mapPublicProfile(r)]));
   }, [ids.slice().sort().join(',')]);
 
-// Insert a cheki row. Tolerates a DB that hasn't run the cafe_ids migration
-// yet: if the column is missing, it retries without cafe_ids so uploads keep
-// working in the window between deploy and migration.
+// Insert a cheki row. Tolerates a DB that hasn't run the latest setup.sql yet:
+// if a newer optional column is missing, it retries without those columns so
+// uploads keep working in the window between deploy and re-running the SQL.
 async function insertChekiRow(payload: Row): Promise<Row> {
   let res = await supabase.from('chekis').insert(payload).select('id').single();
-  if (res.error && /cafe_ids/i.test(res.error.message)) {
+  if (res.error && /cafe_ids|grid_count/i.test(res.error.message)) {
     const fallback = { ...payload };
     delete fallback.cafe_ids;
+    delete fallback.grid_count;
     res = await supabase.from('chekis').insert(fallback).select('id').single();
   }
   if (res.error) {
@@ -546,6 +612,7 @@ export async function addCheki(
     maidIds: string[];
     cafeId?: string;
     cafeIds?: string[];
+    gridCount?: number;
     date?: string;
     type: ChekiType;
     status: ChekiStatus;
@@ -564,6 +631,7 @@ export async function addCheki(
     maid_ids: input.maidIds,
     cafe_id: input.cafeId ?? cafeIds[0] ?? null,
     cafe_ids: cafeIds,
+    grid_count: input.type === 'grid' ? (input.gridCount ?? null) : null,
     date: input.date ?? null,
     type: input.type,
     status: input.status,
@@ -611,6 +679,11 @@ export async function setChekiBinder(chekiId: string, binderId: string | null): 
 
 export async function deleteCheki(chekiId: string): Promise<void> {
   await run(supabase.from('chekis').delete().eq('id', chekiId));
+  bump();
+}
+
+export async function setChekiImage(chekiId: string, imagePath: string): Promise<void> {
+  await writeChecked(supabase.from('chekis').update({ image_path: imagePath }).eq('id', chekiId));
   bump();
 }
 
@@ -773,6 +846,18 @@ export async function createBinder(userId: string, name: string, design: BinderD
 
 export async function setBinderDesign(binderId: string, design: BinderDesign): Promise<void> {
   await writeChecked(supabase.from('binders').update({ design }).eq('id', binderId));
+  bump();
+}
+
+export async function renameBinder(binderId: string, name: string): Promise<void> {
+  await writeChecked(supabase.from('binders').update({ name }).eq('id', binderId));
+  bump();
+}
+
+// Deletes the binder and its cheki links (binder_chekis cascades); the chekis
+// themselves are untouched.
+export async function deleteBinder(binderId: string): Promise<void> {
+  await run(supabase.from('binders').delete().eq('id', binderId));
   bump();
 }
 

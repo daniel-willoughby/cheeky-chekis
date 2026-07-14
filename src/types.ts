@@ -11,6 +11,7 @@ export interface Cheki {
   maidIds: string[];      // one or more maids featured
   cafeId?: string;        // primary cafe (for pricing/labels)
   cafeIds: string[];      // all cafes involved (multi-cafe twin/group/4-cut)
+  gridCount?: number;     // for grid chekis: how many chekis the grid contains
   date?: string;          // ISO date the cheki was taken
   type: ChekiType;
   status: ChekiStatus;

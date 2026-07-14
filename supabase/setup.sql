@@ -76,6 +76,15 @@ create table if not exists settlement_chekis (
   primary key (settlement_id, cheki_id)
 );
 
+-- non-admins can request a new cafe/maid; admins approve (which creates it)
+create table if not exists content_requests (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid references profiles(id) on delete cascade,
+  kind text not null,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 -- ---------------------------------------------------------------------------
 -- 2. Columns (add if missing — reconciles any drift on existing tables)
 -- ---------------------------------------------------------------------------
@@ -114,6 +123,8 @@ alter table chekis add column if not exists image_path text;
 alter table chekis add column if not exists maid_ids uuid[] not null default '{}';
 alter table chekis add column if not exists cafe_id uuid references cafes(id) on delete set null;
 alter table chekis add column if not exists cafe_ids uuid[] not null default '{}';
+-- how many chekis a grid represents (grids count as N toward the total)
+alter table chekis add column if not exists grid_count int;
 alter table chekis add column if not exists date date;
 alter table chekis add column if not exists status text not null default 'on-hand';
 alter table chekis add column if not exists for_sale boolean not null default false;
@@ -140,6 +151,7 @@ alter table binders enable row level security;
 alter table binder_chekis enable row level security;
 alter table cheki_likes enable row level security;
 alter table settlement_chekis enable row level security;
+alter table content_requests enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- 4. Functions
@@ -403,6 +415,20 @@ drop policy if exists "remove your own settlement links" on settlement_chekis;
 create policy "remove your own settlement links"
   on settlement_chekis for delete to authenticated
   using (exists (select 1 from chekis c where c.id = settlement_id and c.owner_id = auth.uid()));
+
+-- content_requests (anyone files; requester or any admin sees/deletes)
+drop policy if exists "see your requests or all if admin" on content_requests;
+create policy "see your requests or all if admin"
+  on content_requests for select to authenticated
+  using (requester_id = auth.uid() or is_admin(auth.uid()));
+drop policy if exists "file your own request" on content_requests;
+create policy "file your own request"
+  on content_requests for insert to authenticated
+  with check (requester_id = auth.uid());
+drop policy if exists "delete your request or any if admin" on content_requests;
+create policy "delete your request or any if admin"
+  on content_requests for delete to authenticated
+  using (requester_id = auth.uid() or is_admin(auth.uid()));
 
 -- ---------------------------------------------------------------------------
 -- 6. Storage buckets + policies

@@ -25,6 +25,7 @@ import {
 import { useAuth } from '../data/auth';
 import { CHEKI_TYPES } from '../data/chekiMeta';
 import { SettlementUploadButton } from './SettlementUploadButton';
+import { ChekiPhotoEditButton } from './ChekiPhotoEditButton';
 import './ChekiSheet.css';
 
 export function ChekiSheet({
@@ -200,6 +201,12 @@ export function ChekiSheet({
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
+
+              {mine && userId && !cheki.settlementOf && (
+                <div className="row" style={{ marginTop: 10 }}>
+                  <ChekiPhotoEditButton chekiId={cheki.id} userId={userId} />
+                </div>
+              )}
 
               <div className="row" style={{ gap: 8, marginTop: 10 }}>
                 <button className="btn ghost" style={{ flex: 1 }} disabled={busy} onClick={() => setEditing(false)}>CANCEL</button>

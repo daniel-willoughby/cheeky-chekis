@@ -75,7 +75,7 @@ export function MaidDetailPage() {
                 style={{ marginBottom: 8 }}
                 onClick={() => setDraft({ ...draft, graduated: !draft.graduated })}
               >
-                {draft.graduated ? '🎓 GRADUATED' : 'MARK AS GRADUATED'}
+                {draft.graduated ? 'GRADUATED' : 'MARK AS GRADUATED'}
               </button>
               <div className="row" style={{ gap: 8, marginBottom: 8 }}>
                 <button className="btn" style={{ flex: 1 }} onClick={save}>SAVE</button>

@@ -67,6 +67,8 @@ export function ProfilePage() {
     .filter(Boolean);
   const onHand = (chekis ?? []).filter((c) => c.status === 'on-hand').length;
   const onWay = (chekis ?? []).filter((c) => c.status === 'on-the-way').length;
+  // total chekis, counting a grid as the number of chekis it holds
+  const totalChekis = (chekis ?? []).reduce((sum, c) => sum + (c.type === 'grid' ? (c.gridCount ?? 1) : 1), 0);
 
   // maids/cafes that actually appear in the collection, for the filter dropdowns
   const ownMaidIds = new Set((chekis ?? []).flatMap((c) => c.maidIds));
@@ -175,6 +177,7 @@ export function ProfilePage() {
           )}
           <div className="row wrap" style={{ marginTop: 6 }}>
             <button className="chip gold" onClick={() => navigate('/shop')}>♥ {profile?.points ?? 0} MONS</button>
+            <span className="chip pink">{totalChekis} CHEKIS</span>
             <span className="chip purple">{onHand} ON HAND</span>
             {onWay > 0 && <span className="chip blue">{onWay} ON THE WAY</span>}
           </div>
