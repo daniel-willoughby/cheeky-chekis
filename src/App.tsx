@@ -18,7 +18,7 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { Toasts } from './components/Toasts';
 import { useAuth } from './data/auth';
-import { claimDailyBonus, ensureProfile } from './data/hooks';
+import { claimDailyBonus, ensureProfile, logAction } from './data/hooks';
 import { useSettings, textScalePercent } from './data/settings';
 
 export default function App() {
@@ -27,7 +27,10 @@ export default function App() {
   const scaleIndex = useSettings((s) => s.scaleIndex);
 
   useEffect(() => {
-    if (userId) ensureProfile(userId).then(() => claimDailyBonus(userId));
+    if (userId) {
+      ensureProfile(userId).then(() => claimDailyBonus(userId));
+      void logAction('session.open');
+    }
   }, [userId]);
 
   useEffect(() => {

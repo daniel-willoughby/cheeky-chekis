@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BackHeader } from '../components/BackHeader';
 import { useSettings, textScalePercent, SCALE_STEP_COUNT } from '../data/settings';
-import { useProfile, updateUsername } from '../data/hooks';
+import { useProfile, updateUsername, useActivityLog, usePublicProfilesByIds } from '../data/hooks';
 import { useAuth } from '../data/auth';
 import { pushToast } from '../data/toast';
 import './common.css';
@@ -18,6 +18,11 @@ export function SettingsPage() {
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameDraft, setUsernameDraft] = useState('');
   const [saving, setSaving] = useState(false);
+  const isAdmin = profile?.isAdmin ?? false;
+  const activity = useActivityLog(50);
+  const actors = usePublicProfilesByIds(
+    isAdmin ? [...new Set((activity ?? []).map((a) => a.userId).filter(Boolean) as string[])] : [],
+  );
 
   function startEditUsername() {
     setUsernameDraft(profile?.username ?? '');
@@ -90,6 +95,29 @@ export function SettingsPage() {
           <button className="chip" disabled={scaleIndex === SCALE_STEP_COUNT - 1} onClick={biggerText}>A+</button>
         </div>
       </div>
+
+      {isAdmin && (
+        <>
+          <div className="section-label">ACTIVITY LOG</div>
+          <div className="pixel-box" style={{ padding: 12 }}>
+            {!activity || activity.length === 0 ? (
+              <p className="body-text" style={{ margin: 0, fontSize: 16 }}>Nothing logged yet.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: 6 }}>
+                {activity.map((a) => (
+                  <div key={a.id} className="body-text" style={{ fontSize: 15, lineHeight: 1.3 }}>
+                    <b>{a.action}</b>
+                    {' · '}
+                    {a.userId ? `@${actors?.get(a.userId)?.username ?? '...'}` : 'unknown'}
+                    {' · '}
+                    {new Date(a.createdAt).toLocaleString()}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="section-label">DISCLAIMER</div>
       <div className="pixel-box" style={{ padding: 14 }}>

@@ -186,6 +186,47 @@ function bump() {
   useDataVersion.getState().bump();
 }
 
+// ---------- activity log (dev-facing) ----------
+// Records what users do in the app so we can review behaviour while building.
+// Fire-and-forget: never throws, never toasts, never blocks the caller — and
+// silently no-ops if the activity_log table isn't there yet.
+export async function logAction(action: string, details?: Record<string, unknown>): Promise<void> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const uid = data.session?.user.id;
+    if (!uid) return;
+    await supabase.from('activity_log').insert({ user_id: uid, action, details: details ?? {} });
+  } catch {
+    /* logging must never break the app */
+  }
+}
+
+export interface ActivityEntry {
+  id: string;
+  userId: string | null;
+  action: string;
+  details: Record<string, unknown>;
+  createdAt: number;
+}
+
+// Admin-only read of the log (RLS enforces it); empty for everyone else.
+export const useActivityLog = (limit = 200): ActivityEntry[] | undefined =>
+  useQuery(async () => {
+    const { data, error } = await supabase
+      .from('activity_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return (data as Row[]).map((r) => ({
+      id: r.id,
+      userId: r.user_id ?? null,
+      action: r.action,
+      details: r.details ?? {},
+      createdAt: Date.parse(r.created_at),
+    }));
+  }, [limit]);
+
 // ---------- profile ----------
 
 export const useProfile = (): Profile | undefined => {
@@ -239,6 +280,7 @@ export async function updateUsername(userId: string, username: string): Promise<
     pushToast(msg);
     throw new Error(msg);
   }
+  void logAction('profile.rename', { username: clean });
   bump();
 }
 
@@ -344,6 +386,7 @@ export async function buyDesign(userId: string, design: BinderDesign): Promise<b
       .update({ points: row.points - cost, owned_designs: [...owned, design] })
       .eq('id', userId),
   );
+  void logAction('shop.buy', { design, cost });
   bump();
   return true;
 }
@@ -470,11 +513,13 @@ export async function setMaidImage(maidId: string, path: string): Promise<void> 
 
 export async function deleteMaid(maidId: string): Promise<void> {
   await run(supabase.from('maids').delete().eq('id', maidId));
+  void logAction('maid.delete', { maidId });
   bump();
 }
 
 export async function deleteCafe(cafeId: string): Promise<void> {
   await run(supabase.from('cafes').delete().eq('id', cafeId));
+  void logAction('cafe.delete', { cafeId });
   bump();
 }
 
@@ -511,11 +556,13 @@ export const usePendingRequests = (): ContentRequest[] | undefined =>
 
 export async function createContentRequest(userId: string, kind: 'cafe' | 'maid', payload: RequestPayload): Promise<void> {
   await run(supabase.from('content_requests').insert({ requester_id: userId, kind, payload }));
+  void logAction('request.create', { kind, name: payload.name });
   bump();
 }
 
 export async function dismissRequest(id: string): Promise<void> {
   await run(supabase.from('content_requests').delete().eq('id', id));
+  void logAction('request.dismiss', { requestId: id });
   bump();
 }
 
@@ -539,6 +586,7 @@ export async function approveRequest(req: ContentRequest): Promise<void> {
     });
   }
   await run(supabase.from('content_requests').delete().eq('id', req.id));
+  void logAction('request.approve', { requestId: req.id, kind: req.kind, name: req.payload.name });
   bump();
 }
 
@@ -644,6 +692,7 @@ export async function addCheki(
     await run(supabase.from('binder_chekis').insert({ binder_id: input.binderId, cheki_id: row.id }));
   }
   await awardPoints(userId, POINTS.upload);
+  void logAction('cheki.upload', { chekiId: row.id, type: input.type, maids: input.maidIds.length });
   bump();
   return row.id;
 }
@@ -679,11 +728,13 @@ export async function setChekiBinder(chekiId: string, binderId: string | null): 
 
 export async function deleteCheki(chekiId: string): Promise<void> {
   await run(supabase.from('chekis').delete().eq('id', chekiId));
+  void logAction('cheki.delete', { chekiId });
   bump();
 }
 
 export async function setChekiImage(chekiId: string, imagePath: string): Promise<void> {
   await writeChecked(supabase.from('chekis').update({ image_path: imagePath }).eq('id', chekiId));
+  void logAction('cheki.photo_change', { chekiId });
   bump();
 }
 
@@ -725,6 +776,7 @@ export async function toggleForSale(cheki: Cheki, price?: number): Promise<void>
       .update({ for_sale: nextForSale, price: nextForSale ? (price ?? cheki.price ?? null) : cheki.price ?? null })
       .eq('id', cheki.id),
   );
+  void logAction(nextForSale ? 'cheki.list' : 'cheki.unlist', { chekiId: cheki.id, price: price ?? cheki.price });
   bump();
 }
 
@@ -735,6 +787,7 @@ export async function markSold(cheki: Cheki): Promise<void> {
   if (cheki.sold && !cheki.forSale) return;
   await writeChecked(supabase.from('chekis').update({ sold: true, for_sale: false }).eq('id', cheki.id));
   await awardPoints(cheki.ownerId, POINTS.sold);
+  void logAction('cheki.sold', { chekiId: cheki.id, price: cheki.price });
   bump();
 }
 
@@ -745,6 +798,7 @@ export async function requestChekiTransfer(cheki: Cheki, friendId: string): Prom
   await writeChecked(
     supabase.from('chekis').update({ transfer_pending_to: friendId, for_sale: false }).eq('id', cheki.id),
   );
+  void logAction('transfer.request', { chekiId: cheki.id, to: friendId });
   bump();
 }
 
@@ -752,6 +806,7 @@ export async function requestChekiTransfer(cheki: Cheki, friendId: string): Prom
 // plain update is enough — no SECURITY DEFINER function needed).
 export async function cancelChekiTransfer(chekiId: string): Promise<void> {
   await writeChecked(supabase.from('chekis').update({ transfer_pending_to: null }).eq('id', chekiId));
+  void logAction('transfer.cancel', { chekiId });
   bump();
 }
 
@@ -776,6 +831,7 @@ export async function acceptChekiTransfer(chekiId: string): Promise<void> {
     pushToast(error.message);
     throw new Error(error.message);
   }
+  void logAction('transfer.accept', { chekiId });
   bump();
 }
 
@@ -785,6 +841,7 @@ export async function declineChekiTransfer(chekiId: string): Promise<void> {
     pushToast(error.message);
     throw new Error(error.message);
   }
+  void logAction('transfer.decline', { chekiId });
   bump();
 }
 
@@ -840,6 +897,7 @@ export async function createBinder(userId: string, name: string, design: BinderD
   const row = await run(
     supabase.from('binders').insert({ owner_id: userId, name, design }).select('id').single(),
   );
+  void logAction('binder.create', { binderId: row.id, name });
   bump();
   return row.id;
 }
@@ -851,6 +909,7 @@ export async function setBinderDesign(binderId: string, design: BinderDesign): P
 
 export async function renameBinder(binderId: string, name: string): Promise<void> {
   await writeChecked(supabase.from('binders').update({ name }).eq('id', binderId));
+  void logAction('binder.rename', { binderId, name });
   bump();
 }
 
@@ -858,6 +917,7 @@ export async function renameBinder(binderId: string, name: string): Promise<void
 // themselves are untouched.
 export async function deleteBinder(binderId: string): Promise<void> {
   await run(supabase.from('binders').delete().eq('id', binderId));
+  void logAction('binder.delete', { binderId });
   bump();
 }
 
@@ -927,6 +987,7 @@ export async function createSettlement(userId: string, parent: Cheki, imagePath:
     settlement_of: parent.id,
   });
   await run(supabase.from('binder_chekis').insert({ binder_id: binderId, cheki_id: row.id }));
+  void logAction('settlement.create', { settlementId: row.id, parentId: parent.id });
   bump();
   return row.id;
 }
@@ -992,11 +1053,13 @@ export async function searchProfiles(query: string, excludeUserId: string): Prom
 
 export async function sendFriendRequest(userId: string, targetId: string): Promise<void> {
   await run(supabase.from('friendships').insert({ requester_id: userId, addressee_id: targetId }));
+  void logAction('friend.request', { to: targetId });
   bump();
 }
 
 export async function acceptFriendRequest(friendshipId: string): Promise<void> {
   await writeChecked(supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId));
+  void logAction('friend.accept', { friendshipId });
   bump();
 }
 

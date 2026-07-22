@@ -76,6 +76,15 @@ create table if not exists settlement_chekis (
   primary key (settlement_id, cheki_id)
 );
 
+-- dev-facing activity log: what users do in the app (admins only can read it)
+create table if not exists activity_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete set null,
+  action text not null,
+  details jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 -- non-admins can request a new cafe/maid; admins approve (which creates it)
 create table if not exists content_requests (
   id uuid primary key default gen_random_uuid(),
@@ -152,6 +161,9 @@ alter table binder_chekis enable row level security;
 alter table cheki_likes enable row level security;
 alter table settlement_chekis enable row level security;
 alter table content_requests enable row level security;
+alter table activity_log enable row level security;
+
+create index if not exists activity_log_created_at_idx on activity_log(created_at desc);
 
 -- ---------------------------------------------------------------------------
 -- 4. Functions
@@ -429,6 +441,17 @@ drop policy if exists "delete your request or any if admin" on content_requests;
 create policy "delete your request or any if admin"
   on content_requests for delete to authenticated
   using (requester_id = auth.uid() or is_admin(auth.uid()));
+
+-- activity_log: anyone records their own actions; only admins can read it back
+drop policy if exists "log your own actions" on activity_log;
+create policy "log your own actions"
+  on activity_log for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists "admins read the activity log" on activity_log;
+create policy "admins read the activity log"
+  on activity_log for select to authenticated using (is_admin(auth.uid()));
+drop policy if exists "admins clear the activity log" on activity_log;
+create policy "admins clear the activity log"
+  on activity_log for delete to authenticated using (is_admin(auth.uid()));
 
 -- ---------------------------------------------------------------------------
 -- 6. Storage buckets + policies

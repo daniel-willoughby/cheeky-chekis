@@ -2,12 +2,14 @@
 
 A running record of major changes to the app. Newest first.
 
-**Legend:** 🗄️ = needed a `supabase/setup.sql` re-run · 🐛 = bug fix · ✨ = new feature · 💄 = look & copy
+**Legend:** 🗄️ = needed a `supabase/setup.sql` re-run · 🐛 = bug fix · ✨ = new feature · 💄 = look & copy · 📝 = docs/process
 
 ---
 
 ## 2026-07-14
 
+- ✨🗄️ **In-app activity log (dev)** — user actions (uploads, sales, transfers, binders, shop, admin edits, requests, logins) are recorded to an `activity_log` table. Admin-only: readable in Settings → ACTIVITY LOG, or straight from Supabase. Logging is fire-and-forget and can never break the app. *(adds `activity_log` table + admin-read RLS)*
+- 📝 Added this `CHANGELOG.md`; every major change gets an entry from here on.
 - ✨🗄️ **Grid cheki count** — grid uploads take a "chekis in grid" number; the profile shows a total **N CHEKIS** that counts each grid as its size. *(adds `chekis.grid_count`)*
 - ✨ **Delete & rename binders** — EDIT NAME / DELETE BINDER on your own binders. Deleting keeps the chekis; the system "Cheki Settlements" binder is protected.
 - ✨🗄️ **Request a cafe or maid** — non-admins can submit a cafe/maid from the bottom of the Cafes page; admins see a REQUESTS panel at the top and APPROVE (creates it) or DISMISS. *(adds `content_requests` table + RLS)*
